@@ -2,6 +2,7 @@ import aiohttp
 from constants import SKILLS, PROFILE_MID_LINK, SEARCH_PROFILE_LINK
 from database import update_skills
 import urllib.parse
+import discord
   
 async def lookup_profile(c, input):
   async with aiohttp.ClientSession() as session:
