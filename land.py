@@ -46,7 +46,7 @@ async def speck_data(conn, session):
                 else:
                     nulls += 1
                     i += 1
-                    await asyncio.sleep(.05)
+                    await asyncio.sleep(.021)
                     continue
             else:
                 nulls = 0
@@ -55,7 +55,7 @@ async def speck_data(conn, session):
             prep_player_info(player_data, total_data_batch, skill_data_batch)
 
             i += 1
-            await asyncio.sleep(.05)
+            await asyncio.sleep(.021)
 
 
 def prep_player_info(player_data, total_data_batch, skill_data_batch):
