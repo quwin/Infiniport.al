@@ -33,7 +33,7 @@ async def speck_data(conn, session):
                 print(f'Speck number not Found: {FIRST_SPECK + i}')
                 nulls += 1
                 i += 1
-                await asyncio.sleep(.2)
+                await asyncio.sleep(1)
                 continue
             data = await response.json()
             player_data = data.get('player', None)
@@ -46,7 +46,7 @@ async def speck_data(conn, session):
                 else:
                     nulls += 1
                     i += 1
-                    await asyncio.sleep(.02)
+                    await asyncio.sleep(.05)
                     continue
             else:
                 nulls = 0
@@ -55,7 +55,7 @@ async def speck_data(conn, session):
             prep_player_info(player_data, total_data_batch, skill_data_batch)
 
             i += 1
-            await asyncio.sleep(.02)
+            await asyncio.sleep(.05)
 
 
 def prep_player_info(player_data, total_data_batch, skill_data_batch):
