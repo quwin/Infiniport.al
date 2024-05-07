@@ -1,8 +1,5 @@
-from constants import NFT_LAND_LINK, SPECK_OWNER_LINK, FIRST_SPECK, BATCH_SIZE, SKILLS, GIVE_UP
+from constants import SPECK_OWNER_LINK, FIRST_SPECK, BATCH_SIZE, SKILLS, GIVE_UP
 import asyncio
-
-async def land_owner_update():
-    return
 
 
 async def speck_data(conn, session):

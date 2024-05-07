@@ -9,7 +9,7 @@ async def guild_data(session, guild_name):
 
 async def guild_search(session, page_number):
     async with session.get(GUILD_HOME + str(page_number)) as response:
-        return response
+        return await response.json()
 
 
 async def guild_update(conn, guild_data):
