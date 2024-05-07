@@ -1,6 +1,18 @@
-from constants import SPECK_OWNER_LINK, FIRST_SPECK, BATCH_SIZE, SKILLS, GIVE_UP
 import asyncio
+import aiohttp
+from constants import SKILLS, SPECK_OWNER_LINK, BATCH_SIZE, GIVE_UP, FIRST_SPECK, SPECK_RATE
 
+class RateLimiter:
+    def __init__(self, rate):
+        self.rate = rate
+        self.semaphore = asyncio.Semaphore(rate)
+
+    async def __aenter__(self):
+        await self.semaphore.acquire()
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await asyncio.sleep(1 / self.rate)
+        self.semaphore.release()
 
 async def speck_data(conn, session):
     i = 0
@@ -8,6 +20,7 @@ async def speck_data(conn, session):
     total_data_batch = []
     skill_data_batch = {skill: [] for skill in SKILLS}
     cursor = await conn.cursor()
+    limiter = RateLimiter(SPECK_RATE)  # 6 requests per second
 
     while i < 400000:
         if i % BATCH_SIZE == 0:
@@ -25,13 +38,14 @@ async def speck_data(conn, session):
                 batch.clear()
 
             await conn.commit()
-        async with session.get(SPECK_OWNER_LINK + str(FIRST_SPECK + i)) as response:
+
+        async with limiter, session.get(SPECK_OWNER_LINK + str(FIRST_SPECK + i)) as response:
             if response.status != 200:
                 print(f'Speck number not Found: {FIRST_SPECK + i}')
                 nulls += 1
                 i += 1
-                await asyncio.sleep(1)
                 continue
+
             data = await response.json()
             player_data = data.get('player', None)
             if player_data is None:
@@ -43,7 +57,6 @@ async def speck_data(conn, session):
                 else:
                     nulls += 1
                     i += 1
-                    await asyncio.sleep(.025)
                     continue
             else:
                 nulls = 0
@@ -52,8 +65,6 @@ async def speck_data(conn, session):
             prep_player_info(player_data, total_data_batch, skill_data_batch)
 
             i += 1
-            await asyncio.sleep(.025)
-
 
 def prep_player_info(player_data, total_data_batch, skill_data_batch):
     total_level = 0
