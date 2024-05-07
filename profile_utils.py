@@ -1,6 +1,4 @@
 import aiohttp
-import aiosqlite
-import discord
 from constants import SKILLS, PROFILE_MID_LINK, SEARCH_PROFILE_LINK
 from database import update_skills
 import urllib.parse
