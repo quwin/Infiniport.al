@@ -10,14 +10,7 @@ async def lookup_profile(c, input):
     async with session.get(PROFILE_MID_LINK + input) as response:
       if response.status != 200:
         print(f"Searched for name: {input}")
-        encoded_input = urllib.parse.quote(input)
-        async with session.get(SEARCH_PROFILE_LINK + encoded_input) as search_response:
-          search_json = await search_response.json()
-          id = input if not search_json else search_json[0]['_id']
-          async with session.get(PROFILE_MID_LINK + id) as profile_response:
-            if profile_response.status != 200:
-              return None, None, None
-            data = await profile_response.json()
+        data = await profile_finder(session, input)
       else:
         data = await response.json()  
 
@@ -68,3 +61,17 @@ async def embed_profile(data, total_levels, total_skills):
   #embed.set_author(name=data['username'],icon_url=data['currentAvatar']['pieces']['image'])
 
   return embed
+
+#Finds profile info from string vs ID
+async def profile_finder(session, input):
+  encoded_input = urllib.parse.quote(input)
+  async with session.get(SEARCH_PROFILE_LINK + encoded_input) as search_response:
+    search_json = await search_response.json()
+    for profile in search_json:
+      if profile['username'] == input:
+        return profile
+    id = input if not search_json else search_json[0]['_id']
+    async with session.get(PROFILE_MID_LINK + id) as profile_response:
+      if profile_response.status != 200:
+        return None, None, None
+      return await profile_response.json()

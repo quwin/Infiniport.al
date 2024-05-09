@@ -1,4 +1,4 @@
-from constants import ICON, ICON_END
+from constants import ICON, ICON_END, SKILLS
 import discord
 import asyncio
 import aiosqlite
@@ -7,8 +7,16 @@ async def leaderboard_func(table_name, order, page_number, server_id=None):
     async with aiosqlite.connect('leaderboard.db') as conn:
         c = await conn.cursor()
 
-        # Determine order field
-        order2 = order if table_name == 'total' else 'exp'
+        # Determine order field + validate inputs
+        valid_orders = ['level', 'exp']
+        valid_tables = SKILLS
+        valid_tables.append('total')
+        if order not in valid_orders:
+            order = 'level'
+        order2 = 'exp'
+        if table_name == 'total' and order == 'level':
+            order2 = 'level'
+        table_name = table_name if table_name in valid_tables else 'total'
 
         # Construct the basic or guild-specific SQL query based on the presence of server_id
         if server_id:
@@ -68,33 +76,32 @@ async def leaderboard_func(table_name, order, page_number, server_id=None):
 
 async def manage_leaderboard(bot, ctx, table_name='total', arg='level', page_number='1', **kwargs):
     page = int(page_number)
-    if arg in ['exp', 'level']:
-        embed = await leaderboard_func(table_name, arg, max(1, page), **kwargs)
-        message = await ctx.channel.send(embed=embed) 
-        right = '➡️'
-        flip = '🔄'
-        left = '⬅️'
-        await message.add_reaction(left)
-        await message.add_reaction(flip)
-        await message.add_reaction(right)
+    embed = await leaderboard_func(table_name, arg, max(1, page), **kwargs)
+    message = await ctx.channel.send(embed=embed) 
+    right = '➡️'
+    flip = '🔄'
+    left = '⬅️'
+    await message.add_reaction(left)
+    await message.add_reaction(flip)
+    await message.add_reaction(right)
 
-        def check(reaction, user):
-            return user != bot.user and str(reaction.emoji) in [left, flip, right] and reaction.message.id == message.id
+    def check(reaction, user):
+        return user != bot.user and str(reaction.emoji) in [left, flip, right] and reaction.message.id == message.id
 
-        while True:
-            try:
-                reaction, user = await bot.wait_for('reaction_add', timeout=60.0, check=check)
-            except asyncio.TimeoutError:
-                await message.clear_reactions()
-                break
-            else:
-                if str(reaction.emoji) == right:
-                    page += 1
-                elif str(reaction.emoji) == left:
-                    page = max(1, page - 1)
-                elif str(reaction.emoji) == flip:
-                    arg = 'level' if arg == 'exp' else 'exp'
-
-                embed = await leaderboard_func(table_name, arg, page, **kwargs)
-                await message.edit(embed=embed)
-                await message.remove_reaction(reaction, user)
+    while True:
+        try:
+            reaction, user = await bot.wait_for('reaction_add', timeout=60.0, check=check)
+        except asyncio.TimeoutError:
+            await message.clear_reactions()
+            break
+        else:
+            if str(reaction.emoji) == right:
+                page += 1
+            elif str(reaction.emoji) == left:
+                page = max(1, page - 1)
+            elif str(reaction.emoji) == flip:
+                arg = 'exp' if arg == 'level' else 'level'
+            
+            embed = await leaderboard_func(table_name, arg, page, **kwargs)
+            await message.edit(embed=embed)
+            await message.remove_reaction(reaction, user)
