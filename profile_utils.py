@@ -1,9 +1,9 @@
 import aiohttp
-from constants import SKILLS, PROFILE_MID_LINK, SEARCH_PROFILE_LINK
+from constants import SKILLS, PROFILE_MID_LINK, SEARCH_PROFILE_LINK, SKILLS_EMOJI, PIXELS_TIPS_LINK
 from database import update_skills
 import urllib.parse
 import discord
-  
+
 async def lookup_profile(c, input):
   async with aiohttp.ClientSession() as session:
     # Asynchronous GET request
@@ -18,7 +18,7 @@ async def lookup_profile(c, input):
 
     #Update Skills in leaderboard:
     await update_skills(c, data, total_levels, total_skills)
-      
+
     return data, total_levels, total_skills
 
 def total_stats(levels):
@@ -29,26 +29,28 @@ def total_stats(levels):
     if lvl_data:
       total_level += lvl_data['level']
       total_exp += lvl_data['totalExp']
-  
+
   return total_level, total_exp
-  
+
 
 async def embed_profile(data, total_levels, total_skills):
-  embed = discord.Embed(title=f"{data['username']}",
-  description=f"User ID {data['_id']}",
+  embed = discord.Embed(title=f"**{data['username']}**",
+  description=f"**User ID**: `{data['_id']}`",
   color=0x00ff00)
 
   embed.add_field(name=f"Account Level: {total_levels}",
-  value=f"Total Exp: {'{:,}'.format(int(total_skills))}",
+  value=f"**Total Exp:** - {'{:,}'.format(int(total_skills))}",
   inline=False)
 
   # info for each Skill
+  i = 0
   for skill in SKILLS:
     skill_data = data['levels'].get(f'{skill}', None)
     if skill_data:
-      embed.add_field(name=f"{skill.title()} - {skill_data['level']}",
-      value=f"{'{:,}'.format(int(skill_data['totalExp']))}",
+      embed.add_field(name=f"{SKILLS_EMOJI[i]} {skill.title()} - Lvl {skill_data['level']}",
+      value=f"> {'{:,}'.format(int(skill_data['totalExp']))} xp",
       inline=True)
+    i += 1
 
   # Thumbnail image data
   image_url = data.get('currentAvatar', {}).get('pieces', {}).get('image', None)
@@ -56,9 +58,7 @@ async def embed_profile(data, total_levels, total_skills):
     embed.set_thumbnail(url=image_url)
 
   # Footer text
-  embed.set_footer(text=f"Page 1/1 (work in progress)")
-
-  #embed.set_author(name=data['username'],icon_url=data['currentAvatar']['pieces']['image'])
+  embed.set_author(name="Pixels.tips Link", url=f"{PIXELS_TIPS_LINK}{data['_id']}")
 
   return embed
 
