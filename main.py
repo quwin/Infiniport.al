@@ -6,7 +6,7 @@ from leaderboard import manage_leaderboard
 from constants import TOKEN, NFT_LINK
 from guild import guild_data, guild_update
 from land import speck_data
-import asyncio
+from job import manage_job
 import aiosqlite
 import aiohttp
 
@@ -76,6 +76,14 @@ async def chibi(ctx, nft_id):
     f"{NFT_LINK}{nft_id}.gif"
   )
   pass
+
+@bot.command()
+async def job(ctx, quantity=1, item="2", reward=0, details="N/A", time_limit = 24.0):
+  # Time Limit is input in hours
+  time_limit *= 3600
+  details = ''.join(details) if details else None
+  await manage_job(bot, ctx, item, quantity, reward, details, time_limit)
+
 
 @tasks.loop(minutes=2880)
 async def batch_speck_update():
