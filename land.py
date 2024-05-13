@@ -1,6 +1,6 @@
 import asyncio
 import aiohttp
-from constants import SKILLS, SPECK_OWNER_LINK, BATCH_SIZE, GIVE_UP, FIRST_SPECK, SPECK_RATE
+from constants import SKILLS, SPECK_OWNER_LINK, BATCH_SIZE, GIVE_UP, FIRST_SPECK, SPECK_RATE, NFT_LAND_LINK
 import time
 
 # Limits the number of requests to the API to avoid rate limiting, while not limiting speed if the loop takes longer than the rate limit
@@ -26,6 +26,49 @@ class AdaptiveRateLimiter:
         await self.times.put(current_time)
         self.semaphore.release()
 
+async def nft_land_data(conn, session):
+    i = 1
+    total_data_batch = []
+    skill_data_batch = {skill: [] for skill in SKILLS}
+    cursor = await conn.cursor()
+    limiter = AdaptiveRateLimiter(SPECK_RATE, 1)
+
+    
+    while i <= 5000:
+        async with limiter, session.get(NFT_LAND_LINK + str(i)) as response:
+            if response.status != 200:
+                print(f'NFT Land response not Found: {i}')
+                i += 1
+                continue
+
+            data = await response.json()
+            player_data = data.get('player', None)
+            if player_data is None:
+                i += 1
+                continue
+
+            # Places player data into arrays for batches
+            prep_player_info(player_data, total_data_batch, skill_data_batch)
+            i += 1
+    #After scanning all 5,000 Lands
+    print(f'{i} Lands scanned.')
+    await cursor.executemany(
+        '''INSERT OR REPLACE INTO total (user_id, username, level, exp)
+      VALUES (?, ?, ?, ?)''', total_data_batch)
+    total_data_batch.clear()
+
+    for skill, batch in skill_data_batch.items():
+        await cursor.executemany(
+            f'''INSERT OR REPLACE INTO {skill}
+          (user_id, username, level, exp, current_exp)
+          VALUES (?, ?, ?, ?, ?)''', batch)
+        batch.clear()
+
+    await conn.commit()
+
+
+
+        
 async def speck_data(conn, session):
     i = 0
     nulls = 0
@@ -34,7 +77,7 @@ async def speck_data(conn, session):
     cursor = await conn.cursor()
     limiter = AdaptiveRateLimiter(SPECK_RATE, 1)  # SPECK_RATE requests per second
 
-    while i < 400000:
+    while True:
         if i % BATCH_SIZE == 0:
             print(f'{i} Specks scanned.')
             await cursor.executemany(
@@ -51,31 +94,30 @@ async def speck_data(conn, session):
 
             await conn.commit()
 
-        async with limiter:
-            async with session.get(SPECK_OWNER_LINK + str(FIRST_SPECK + i)) as response:
-                if response.status != 200:
-                    print(f'Speck number not Found: {FIRST_SPECK + i}')
+        async with limiter, session.get(SPECK_OWNER_LINK + str(FIRST_SPECK + i)) as response:
+            if response.status != 200:
+                print(f'Speck number not Found: {FIRST_SPECK + i}')
+                nulls += 1
+                i += 1
+                continue
+
+            data = await response.json()
+            player_data = data.get('player', None)
+            if player_data is None:
+                if nulls > GIVE_UP:
+                    print(f'Player Data not Found for Speck {FIRST_SPECK + i-GIVE_UP} through Speck {FIRST_SPECK + i}, stopping')
+                    return
+                else:
                     nulls += 1
                     i += 1
                     continue
+            else:
+                nulls = 0
 
-                data = await response.json()
-                player_data = data.get('player', None)
-                if player_data is None:
-                    if nulls > GIVE_UP:
-                        print(f'Player Data not Found for Speck {FIRST_SPECK + i-GIVE_UP} through Speck {FIRST_SPECK + i}, stopping')
-                        return
-                    else:
-                        nulls += 1
-                        i += 1
-                        continue
-                else:
-                    nulls = 0
+            # Places player data into arrays for batches
+            prep_player_info(player_data, total_data_batch, skill_data_batch)
 
-                # Places player data into arrays for batches
-                prep_player_info(player_data, total_data_batch, skill_data_batch)
-
-                i += 1
+            i += 1
 
 def prep_player_info(player_data, total_data_batch, skill_data_batch):
     total_level = 0

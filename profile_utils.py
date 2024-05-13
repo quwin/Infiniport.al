@@ -70,6 +70,9 @@ async def profile_finder(session, input):
     for profile in search_json:
       if profile['username'] == input:
         return profile
+      for wallet in profile['cryptoWallets']:
+        if wallet['address'] == input:
+          return profile
     id = input if not search_json else search_json[0]['_id']
     async with session.get(PROFILE_MID_LINK + id) as profile_response:
       if profile_response.status != 200:

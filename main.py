@@ -5,7 +5,7 @@ from database import init_db, database_remove, init_guild_db
 from leaderboard import manage_leaderboard
 from constants import TOKEN, NFT_LINK
 from guild import guild_data, guild_update
-from land import speck_data
+from land import speck_data, nft_land_data
 from job import manage_job
 import aiosqlite
 import aiohttp
@@ -23,6 +23,7 @@ async def on_ready():
   # update_voice_channel_name.start()
   # batch_guild_update.start()
   batch_speck_update.start()
+  batch_nft_land_update.start()
 
 @bot.event
 async def on_message(ctx):
@@ -81,7 +82,6 @@ async def chibi(ctx, nft_id):
 async def job(ctx, quantity=1, item="2", reward=0, details="N/A", time_limit = 24.0):
   # Time Limit is input in hours
   time_limit *= 3600
-  details = ''.join(details) if details else None
   await manage_job(bot, ctx, item, quantity, reward, details, time_limit)
 
 
@@ -89,6 +89,12 @@ async def job(ctx, quantity=1, item="2", reward=0, details="N/A", time_limit = 2
 async def batch_speck_update():
   async with aiosqlite.connect('leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await speck_data(conn, session)
+    await conn.commit()
+
+@tasks.loop(minutes=120)
+async def batch_nft_land_update():
+  async with aiosqlite.connect('leaderboard.db') as conn, aiohttp.ClientSession() as session:
+    await nft_land_data(conn, session)
     await conn.commit()
   
 #Not implemented
