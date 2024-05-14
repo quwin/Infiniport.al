@@ -43,6 +43,11 @@ class LeaderboardView(discord.ui.View):
                                        self.page_number, self.server_id)
         await interaction.response.edit_message(embed=embed, view=self)
 
+    async def on_timeout(self):
+        try:
+            await self.interaction.edit_original_response(view=None)
+        except Exception as e:
+            print(f"Failed to edit message on timeout: {str(e)}")
 
 async def manage_leaderboard(interaction,
                              table_name='total',
