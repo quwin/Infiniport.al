@@ -38,6 +38,7 @@ async def nft_land_data(conn, session):
         async with limiter, session.get(NFT_LAND_LINK + str(i)) as response:
             if response.status != 200:
                 print(f'NFT Land response not Found: {i}')
+                await asyncio.sleep(5)
                 i += 1
                 continue
 
@@ -97,6 +98,7 @@ async def speck_data(conn, session):
         async with limiter, session.get(SPECK_OWNER_LINK + str(FIRST_SPECK + i)) as response:
             if response.status != 200:
                 print(f'Speck number not Found: {FIRST_SPECK + i}')
+                await asyncio.sleep(5)
                 nulls += 1
                 i += 1
                 continue
