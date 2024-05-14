@@ -1,12 +1,13 @@
 import discord
 from discord.ext import commands, tasks
+from discord import app_commands
 from profile_utils import lookup_profile, embed_profile
 from database import init_db, database_remove, init_guild_db
 from leaderboard import manage_leaderboard
 from constants import TOKEN, NFT_LINK
 from guild import guild_data, guild_update
 from land import speck_data, nft_land_data
-from job import manage_job
+from modal import JobInput
 import aiosqlite
 import aiohttp
 
@@ -14,52 +15,64 @@ intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
 bot = commands.Bot(intents=intents, command_prefix='!')
+client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
 
 
-@bot.event
+@client.event
 async def on_ready():
-  print(f'We have logged in as {bot.user}')
+  await tree.sync()
+  print(f'We have logged in as {client.application_id}')
   await init_db()
   # update_voice_channel_name.start()
   # batch_guild_update.start()
   batch_speck_update.start()
   batch_nft_land_update.start()
 
-@bot.event
-async def on_message(ctx):
-  await bot.process_commands(ctx)
 
-
-@bot.command()
-async def lookup(ctx, mid):
+@tree.command(name="lookup", description="Lookup a player's Pixels profile")
+async def lookup(interaction, input: str):
   async with aiosqlite.connect('leaderboard.db') as conn:
     c = await conn.cursor()
-    (data, total_levels, total_skills) = await lookup_profile(c, mid)
-    
+    (data, total_levels, total_skills) = await lookup_profile(c, input)
+
     embed = await embed_profile(data, total_levels, total_skills)
-    await ctx.channel.send(embed=embed)
+    await interaction.response.send_message(embed=embed)
     # commit after user recieves message so they dont need to wait
     await conn.commit()
 
   pass
 
-@bot.command()
+
+@commands.hybrid_command()
 async def dbremove(_ctx, mid):
   await database_remove(mid)
   pass
 
-@bot.command()
-async def glb(ctx, table_name='total', arg='level', page_number='1'):
-    await manage_leaderboard(bot, ctx, table_name, arg, page_number)
 
-@bot.command()
-async def lb(ctx, table_name='total', arg='level', page_number='1'):
-    server_id = ctx.guild.id
-    await manage_leaderboard(bot, ctx, table_name, arg, page_number, server_id=server_id)
+@tree.command(name="global_leaderboard",
+              description="Look at a ranking of (almost) every Pixels Player!")
+async def global_leaderboard(interaction,
+                             skill: str = 'total',
+                             sort: str = 'level',
+                             page_number: int = 1):
+  await manage_leaderboard(interaction, skill, sort, page_number)
 
-@bot.command()
+
+@tree.command(name="leaderboard",
+              description="Look at your guild's Leaderboard!")
+async def leaderboard(interaction,
+                      skill: str = 'total',
+                      sort: str = 'level',
+                      page_number: int = 1):
+  server_id = interaction.guild.id
+  await manage_leaderboard(interaction, skill, sort, page_number, server_id)
+
+
+@commands.hybrid_command()
 async def assignguild(ctx, guild_name):
-  async with aiosqlite.connect('leaderboard.db') as conn, aiohttp.ClientSession() as session:
+  async with aiosqlite.connect(
+      'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     data = await guild_data(session, guild_name)
     guild_info = data.get('guild', None)
     if guild_info is None:
@@ -71,36 +84,38 @@ async def assignguild(ctx, guild_name):
     await guild_update(conn, data)
     await conn.commit()
 
-@bot.command()
-async def chibi(ctx, nft_id):
-  await ctx.channel.send(
-    f"{NFT_LINK}{nft_id}.gif"
-  )
-  pass
 
-@bot.command()
-async def job(ctx, quantity=1, item="2", reward=0, details="N/A", time_limit = 24.0):
-  # Time Limit is input in hours
-  time_limit *= 3600
-  await manage_job(bot, ctx, item, quantity, reward, details, time_limit)
+@tree.command(name="job", description="Create a claimable job!")
+async def job(interaction):
+  await interaction.response.send_modal(JobInput())
+
+
+@tree.command(name="chibi", description="Show off your Chibi!")
+async def chibi(interaction, nft_id: str):
+  await interaction.response.send_message(f"{NFT_LINK}{nft_id}.gif")
 
 
 @tasks.loop(minutes=2880)
 async def batch_speck_update():
-  async with aiosqlite.connect('leaderboard.db') as conn, aiohttp.ClientSession() as session:
+  async with aiosqlite.connect(
+      'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await speck_data(conn, session)
     await conn.commit()
 
+
 @tasks.loop(minutes=120)
 async def batch_nft_land_update():
-  async with aiosqlite.connect('leaderboard.db') as conn, aiohttp.ClientSession() as session:
+  async with aiosqlite.connect(
+      'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await nft_land_data(conn, session)
     await conn.commit()
-  
+
+
 #Not implemented
 @tasks.loop(minutes=60)
 async def update_voice_channel_name():
   guild_id = 880961748092477453
   return
 
-bot.run(TOKEN)
+
+client.run(TOKEN)
