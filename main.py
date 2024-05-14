@@ -21,7 +21,7 @@ tree = app_commands.CommandTree(client)
 
 @client.event
 async def on_ready():
-  await tree.sync()
+  await tree.sync(guild=discord.Object(id=880961748092477453))
   print(f'We have logged in as {client.application_id}')
   await init_db()
   # update_voice_channel_name.start()
@@ -30,7 +30,9 @@ async def on_ready():
   batch_nft_land_update.start()
 
 
-@tree.command(name="lookup", description="Lookup a player's Pixels profile")
+@tree.command(name="lookup",
+              description="Lookup a player's Pixels profile",
+              guild=discord.Object(id=880961748092477453))
 async def lookup(interaction, input: str):
   async with aiosqlite.connect('leaderboard.db') as conn:
     c = await conn.cursor()
@@ -51,7 +53,8 @@ async def dbremove(_ctx, mid):
 
 
 @tree.command(name="global_leaderboard",
-              description="Look at a ranking of (almost) every Pixels Player!")
+              description="Look at a ranking of (almost) every Pixels Player!",
+              guild=discord.Object(id=880961748092477453))
 async def global_leaderboard(interaction,
                              skill: str = 'total',
                              sort: str = 'level',
@@ -60,7 +63,8 @@ async def global_leaderboard(interaction,
 
 
 @tree.command(name="leaderboard",
-              description="Look at your guild's Leaderboard!")
+              description="Look at your guild's Leaderboard!",
+              guild=discord.Object(id=880961748092477453))
 async def leaderboard(interaction,
                       skill: str = 'total',
                       sort: str = 'level',
@@ -85,12 +89,16 @@ async def assignguild(ctx, guild_name):
     await conn.commit()
 
 
-@tree.command(name="job", description="Create a claimable job!")
+@tree.command(name="job",
+              description="Create a claimable job!",
+              guild=discord.Object(id=880961748092477453))
 async def job(interaction):
   await interaction.response.send_modal(JobInput())
 
 
-@tree.command(name="chibi", description="Show off your Chibi!")
+@tree.command(name="chibi",
+              description="Show off your Chibi!",
+              guild=discord.Object(id=880961748092477453))
 async def chibi(interaction, nft_id: str):
   await interaction.response.send_message(f"{NFT_LINK}{nft_id}.gif")
 
