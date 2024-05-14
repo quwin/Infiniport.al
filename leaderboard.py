@@ -12,7 +12,7 @@ class LeaderboardView(discord.ui.View):
                  arg='level',
                  page_number=1,
                  server_id=None):
-        super().__init__(timeout=None)
+        super().__init__(timeout=60.0)
 
         self.interaction = interaction
         self.table_name = table_name
@@ -22,19 +22,19 @@ class LeaderboardView(discord.ui.View):
 
     @discord.ui.button(label='Previous', style=discord.ButtonStyle.grey)
     async def previous_button(self, interaction: discord.Interaction,
-                              button: discord.ui.Button):
+                              _button: discord.ui.Button):
         self.page_number = max(1, self.page_number - 1)
         await self.update_leaderboard(interaction)
 
     @discord.ui.button(label='Flip Order', style=discord.ButtonStyle.blurple)
     async def flip_button(self, interaction: discord.Interaction,
-                          button: discord.ui.Button):
+                          _button: discord.ui.Button):
         self.arg = 'exp' if self.arg == 'level' else 'level'
         await self.update_leaderboard(interaction)
 
     @discord.ui.button(label='Next', style=discord.ButtonStyle.grey)
     async def next_button(self, interaction: discord.Interaction,
-                          button: discord.ui.Button):
+                          _button: discord.ui.Button):
         self.page_number += 1
         await self.update_leaderboard(interaction)
 

@@ -73,14 +73,17 @@ async def manage_job(interaction: discord.Interaction, item, quantity, reward,
           == f"claim_{interaction.id}"):
         # if it's already claimed
         if claimer:
-          await interaction.followup.send("This job is already claimed!",
-                                          ephemeral=True)
+          await interaction.followup.send("This job is already claimed!", ephemeral=True)
           continue
         else:
           claimer = button_interaction.user.id
           await interaction.followup.send(
-              f"<@{button_interaction.user.id}>, you have claimed <@{author.id}>'s order of {quantity}x {item}!",
-              ephemeral=True)
+              f"<@{author.id}>, your order of {quantity}x {item}! has been claimed by <@{button_interaction.user.id}>!", ephemeral=True)
+
+        # update embed
+        embed = await embed_job(author, item, quantity, reward, details,
+                                time_limit, claimer)
+        await button_interaction.response.edit_message(embed=embed, view=view)
       # if they click "Unclaim" button
       elif (button_interaction.data
             and button_interaction.data.get('custom_id')
@@ -88,9 +91,12 @@ async def manage_job(interaction: discord.Interaction, item, quantity, reward,
         if button_interaction.user.id == claimer:
           claimer = None
         else:
-          await interaction.followup.send("You cannot unclaim this job!",
-                                          ephemeral=True)
+          await interaction.followup.send("You cannot unclaim this job!", ephemeral=True)
           continue
+        # update embed
+        embed = await embed_job(author, item, quantity, reward, details,
+                                time_limit, claimer)
+        await button_interaction.response.edit_message(embed=embed, view=view)
       # if they click "Close Job" button
       elif (button_interaction.data
             and button_interaction.data.get('custom_id')
@@ -99,18 +105,15 @@ async def manage_job(interaction: discord.Interaction, item, quantity, reward,
           await interaction.delete_original_response()
           break
         elif (button_interaction.user.id == claimer):
-          await interaction.followup.send(f"<@{author.id}>, <@{button_interaction.user.id}> has closed your job!",
-            ephemeral=False)
+          await interaction.followup.send(
+              f"<@{author.id}>, <@{button_interaction.user.id}> has closed your job!",
+              ephemeral=False)
           await interaction.delete_original_response()
           break
         else:
           await interaction.followup.send("You cannot close this job!",
-            ephemeral=True)
+                                          ephemeral=True)
           continue
-
-      embed = await embed_job(author, item, quantity, reward, details,
-                              time_limit, claimer)
-      await button_interaction.response.edit_message(embed=embed, view=view)
     except asyncio.TimeoutError:
       await interaction.delete_original_response()
       break
