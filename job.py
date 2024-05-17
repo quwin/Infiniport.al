@@ -79,7 +79,7 @@ async def manage_job(interaction: discord.Interaction, item, quantity, reward,
         # update embed
         embed = await embed_job(author, item, quantity, reward, details,
                                 time_limit, claimer)
-        await button_interaction.edit_original_response(embed=embed, view=view)
+        await button_interaction.response.edit_message(embed=embed, view=view)
       # if they click "Unclaim" button
       elif (button_interaction.data
             and button_interaction.data.get('custom_id')
@@ -89,19 +89,19 @@ async def manage_job(interaction: discord.Interaction, item, quantity, reward,
         # update embed
         embed = await embed_job(author, item, quantity, reward, details,
                                 time_limit, claimer)
-        await button_interaction.edit_original_response(embed=embed, view=view)
+        await button_interaction.response.edit_message(embed=embed, view=view)
       # if they click "Close Job" button
       elif (button_interaction.data
             and button_interaction.data.get('custom_id')
             == f"close_job_{interaction.id}"):
         if (button_interaction.user.id == author.id):
-          await interaction.delete_original_response()
+          await button_interaction.message.delete()
           break
         elif (button_interaction.user.id == claimer):
           await interaction.followup.send(
               f"<@{author.id}>, <@{button_interaction.user.id}> has closed your job!",
               ephemeral=False)
-          await interaction.delete_original_response()
+          await button_interaction.message.delete()
           break
     except asyncio.TimeoutError:
       await interaction.delete_original_response()
