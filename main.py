@@ -23,8 +23,8 @@ tree = app_commands.CommandTree(client)
 
 @client.event
 async def on_ready():
-  tree.clear_commands(guild=None)
-  tree.clear_commands(guild=discord.Object(id=880961748092477453))
+# tree.clear_commands(guild=None)
+# tree.clear_commands(guild=discord.Object(id=880961748092477453))
   await tree.sync()
   print(f'We have logged in as {client.application_id}')
   await init_db()
@@ -110,7 +110,7 @@ tree.add_command(job_group)
 # Main /taskboard
 @tree.command(name="taskboard",
   description="View the tasks available to complete!")
-async def jobs(interaction: discord.Interaction):
+async def taskboard(interaction: discord.Interaction):
   await interaction.response.send_modal(JobInput(client))
 
 
