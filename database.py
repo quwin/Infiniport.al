@@ -25,8 +25,24 @@ async def init_db():
                 level integer, exp float, current_exp float)'''
             )
 
+
         await conn.commit()
-    print('Database Initialized!')
+    # create job database
+    async with aiosqlite.connect('jobs.db') as db:
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS jobs (
+                job_id TEXT PRIMARY KEY,
+                author_id INTEGER,
+                item TEXT,
+                quantity INTEGER,
+                reward TEXT,
+                details TEXT,
+                time_limit REAL,
+                claimer_id INTEGER
+            )
+        ''')
+        await db.commit()
+    print('Databases Initialized!')
 
 
 
@@ -62,14 +78,44 @@ async def database_remove(user_id):
           await conn.commit()
           print(f"purged {user_id} from database")
 
-async def init_guild_db(server_id, guild_name, conn):
+async def init_guild_db(server_id, guild_id, conn):
     c = await conn.cursor()
     await c.execute(
-        f'''CREATE TABLE IF NOT EXISTS guild_{guild_name}
+        f'''CREATE TABLE IF NOT EXISTS guild_{guild_id}
         (user_id text PRIMARY KEY, username text, role text)'''
     )
     await c.execute(
         '''INSERT OR REPLACE INTO discord_servers (server_id, linked_guild)
         VALUES (?, ?)''',
-        (server_id, guild_name)
+        (server_id, guild_id)
     )
+
+async def update_job_claimer(job_id, claimer_id):
+    async with aiosqlite.connect('jobs.db') as db:
+        await db.execute('''
+            UPDATE jobs
+            SET claimer_id = ?
+            WHERE job_id = ?
+        ''', (claimer_id, job_id))
+        await db.commit()
+
+async def delete_job(job_id):
+    async with aiosqlite.connect('jobs.db') as db:
+        await db.execute('''
+            DELETE FROM jobs
+            WHERE job_id = ?
+        ''', (job_id,))
+        await db.commit()
+
+async def fetch_job(job_id):
+    async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT * FROM jobs WHERE job_id = ?', (job_id,)) as cursor:
+        job = await cursor.fetchone()
+        return job
+
+async def add_job(job_id, author_id, item, quantity, reward, details, time_limit, claimer_id=None):
+    async with aiosqlite.connect('jobs.db') as db:
+        await db.execute('''
+            INSERT OR REPLACE INTO jobs (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id))
+        await db.commit()
