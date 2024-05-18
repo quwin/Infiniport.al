@@ -17,15 +17,13 @@ intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
 bot = commands.Bot(intents=intents, command_prefix='!')
-client = discord.Client(intents=intents)
+client = discord.Client(intents=intents, command_prefix='!')
 tree = app_commands.CommandTree(client)
 
 
 @client.event
 async def on_ready():
-# tree.clear_commands(guild=None)
-# tree.clear_commands(guild=discord.Object(id=880961748092477453))
-  await tree.sync()
+  await tree.sync(guild=discord.Object(id=1234015429874417706))
   print(f'We have logged in as {client.application_id}')
   await init_db()
   await init_job_views(client)
@@ -41,6 +39,33 @@ async def init_job_views(client: discord.Client):
   for job_id in jobs:
     client.add_view(JobView(job_id[0]))
 
+@tree.command(name="clear_commands",
+  description="ofc",
+ guild=discord.Object(id=1234015429874417706))
+async def clear_commands(interaction, server: str | None = None):
+  if interaction.user.id != 239235420104163328:
+    return
+  tree.clear_commands(guild=None)
+  if server is None:
+    await tree.sync()
+  else:
+    await tree.sync(guild=discord.Object(id=server))
+  await interaction.response.defer()
+  print('Command tree removed!')
+
+@tree.command(name="add_commands",
+  description="ofc",
+             guild=discord.Object(id=1234015429874417706))
+async def add_commands(interaction, server: str | None = None):
+  if interaction.user.id != 239235420104163328:
+    return
+  if server is None:
+    await tree.sync()
+  else:
+    await tree.sync(guild=discord.Object(id=int(server)))
+  await interaction.response.defer()
+  print('Command tree synced!')
+  
 @tree.command(name="lookup",
               description="Lookup a player's Pixels profile")
 async def lookup(interaction, input: str):
