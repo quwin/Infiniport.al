@@ -2,7 +2,7 @@ import discord
 from job import create_job, JobView
 
 
-class JobInput(discord.ui.Modal, title='Input Job Details:'):
+class JobInput(discord.ui.Modal, title='Input Task Details:'):
     def __init__(self, client):
         super().__init__()
         self.client = client

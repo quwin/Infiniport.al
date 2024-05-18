@@ -13,7 +13,7 @@ class JobView(discord.ui.View):
         # is required to be in the same scope as job_id
         self.claim_button = discord.ui.Button(label="Claim", style=discord.ButtonStyle.green, custom_id=f'claim_{job_id}')
         self.unclaim_button = discord.ui.Button(label="Unclaim", style=discord.ButtonStyle.red, custom_id=f'unclaim_{job_id}')
-        self.close_job_button = discord.ui.Button(label="Close Job", style=discord.ButtonStyle.blurple, custom_id=f'close_job_{job_id}')
+        self.close_job_button = discord.ui.Button(label="Close Task", style=discord.ButtonStyle.blurple, custom_id=f'close_job_{job_id}')
 
         self.claim_button.callback = self.claim_button_callback
         self.unclaim_button.callback = self.unclaim_button_callback
@@ -55,7 +55,7 @@ async def update_job(interaction: discord.Interaction, view, job_id: str, button
         if not claimer_id:
             claimer_id = interaction.user.id
             await update_job_claimer(job_id, claimer_id)
-            await interaction.response.send_message(f"Job claimed by {interaction.user.mention}!", ephemeral=True)
+            await interaction.response.send_message(f"Task claimed by {interaction.user.mention}!", ephemeral=True)
         else:
             await interaction.response.defer()
             
@@ -71,7 +71,7 @@ async def update_job(interaction: discord.Interaction, view, job_id: str, button
         await interaction.message.delete()
         return
       elif interaction.user.id == claimer_id:
-        await interaction.response.send_message(f"<@{author_id}>, {interaction.user.mention} has ended your job!")
+        await interaction.response.send_message(f"<@{author_id}>, {interaction.user.mention} has ended your task!")
         await delete_job(job_id)
         await interaction.message.delete()
         return
@@ -91,7 +91,7 @@ async def embed_job(author,
                     claimer=None):
   embed = discord.Embed(
       title=
-      "<:pixelcoin:1238636808951038092> **New Job Posted!** <:pixelcoin:1238636808951038092>\n",
+      "<:pixelcoin:1238636808951038092> **New Task Posted!** <:pixelcoin:1238636808951038092>\n",
       color=0x00ff00)
   embed.set_author(name=f"Requested by {author.display_name}",
                    icon_url=f"{author.display_avatar}")
