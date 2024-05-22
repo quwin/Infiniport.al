@@ -1,14 +1,10 @@
 # webserver.py
-from flask import Flask, request, jsonify, redirect, url_for
+from flask import Flask, request, redirect, url_for
 import aiohttp
 import asyncio
-from constants import REDIRECT_URI
+from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY
 
 app = Flask(__name__)
-
-# Your client ID, client secret, and redirect URI
-CLIENT_ID = 'your_client_id'
-CLIENT_SECRET = 'your_client_secret'
 
 queue = asyncio.Queue()
 
@@ -17,29 +13,38 @@ async def get_access_token(auth_code):
     data = {
         "grant_type": "authorization_code",
         "code": auth_code,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
+        "client_id": COLLAB_ID,
+        "client_secret": COLLAB_SECRET,
         "redirect_uri": REDIRECT_URI,
     }
     async with aiohttp.ClientSession() as session:
         async with session.post(token_url, data=data) as response:
             return await response.json()
 
-async def get_user_wallets(access_token):
+async def get_user_wallets(access_token, limit=None, pagination_token=None):
     wallets_url = "https://api.collab.land/user/wallets"
+    params = {}
+    if limit is not None:
+        params['limit'] = limit
+    if pagination_token is not None:
+        params['paginationToken'] = pagination_token
+
     headers = {
-        "Authorization": f"Bearer {access_token}"
+        'x-api-key': COLLAB_KEY,
+        'accept': 'application/json',
+        'Authorization': f"AE <{access_token}>"
     }
-    async with aiohttp.ClientSession() as session:
-        async with session.get(wallets_url, headers=headers) as response:
-            return await response.json()
+
+    async with aiohttp.ClientSession() as session, session.get(wallets_url, headers=headers, params=params) as response:
+        return await response.json()
 
 @app.route("/oauth2/callback")
 def oauth2_callback():
     auth_code = request.args.get("code")
     state = request.args.get("state")
     if auth_code and state:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         access_token_data = loop.run_until_complete(get_access_token(auth_code))
         access_token = access_token_data.get("access_token")
         user_wallets = loop.run_until_complete(get_user_wallets(access_token))

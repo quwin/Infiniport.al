@@ -11,9 +11,11 @@ from modal import JobInput
 from job import JobView, show_unclaimed_jobs
 from collab_land import collab_channel, CollabButtons
 from webserver import run_flask, queue
+from concurrent.futures import ThreadPoolExecutor
 import aiosqlite
 import aiohttp
 import asyncio
+
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -171,14 +173,17 @@ async def update_voice_channel_name():
 
 
 async def process_queue():
-    while True:
-        user_id, user_wallets = await queue.get()
-        user = client.get_user(user_id)
-        if user:
-            await user.send(f"Your linked wallets: {user_wallets}")
+  while True:
+      user_id, user_wallets = await queue.get()
+      user = client.get_user(user_id)
+      if user:
+          await user.send(f"Your linked wallets: {user_wallets}")
 
-client.run(TOKEN)
+def run_bot():
+  client.run(TOKEN)
 
 if __name__ == "__main__":
   loop = asyncio.get_event_loop()
-  loop.run_in_executor(None, run_flask)
+  executor = ThreadPoolExecutor()
+  loop.run_in_executor(executor, run_flask)
+  loop.run_until_complete(run_bot())
