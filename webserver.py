@@ -2,14 +2,13 @@
 from flask import Flask, request, jsonify, redirect, url_for
 import aiohttp
 import asyncio
+from constants import REDIRECT_URI
 
 app = Flask(__name__)
 
 # Your client ID, client secret, and redirect URI
 CLIENT_ID = 'your_client_id'
 CLIENT_SECRET = 'your_client_secret'
-PUBLIC_IP = 'your_server_public_ip'  # Replace with your server's public IP or domain
-REDIRECT_URI = f'http://{PUBLIC_IP}:5000/oauth2/callback'
 
 queue = asyncio.Queue()
 
