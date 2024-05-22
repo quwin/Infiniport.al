@@ -32,11 +32,10 @@ async def on_ready():
   client.add_view(CollabButtons())
   await collab_channel(client)
   asyncio.create_task(process_queue())
-
+  batch_speck_update.start()
+  batch_nft_land_update.start()
   # update_voice_channel_name.start()
   # batch_guild_update.start()
-  #batch_speck_update.start()
-  #batch_nft_land_update.start()
 
 async def init_job_views(client: discord.Client):
   async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT job_id FROM jobs') as cursor:
@@ -163,13 +162,6 @@ async def batch_nft_land_update():
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await nft_land_data(conn, session)
     await conn.commit()
-
-async def link_pixels_account(interaction):
-  async with aiosqlite.connect(
-    'leaderboard.db') as conn, aiohttp.ClientSession() as session:
-    await manage_collab_link(interaction, conn, session)
-    await conn.commit()
-
 
 #Not implemented
 @tasks.loop(minutes=60)
