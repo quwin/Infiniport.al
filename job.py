@@ -2,7 +2,7 @@ import asyncio
 import discord
 import time
 from constants import SKILLS
-from database import fetch_job, delete_job, update_job_claimer, add_job
+from database import fetch_job, delete_job, update_job_claimer, add_job, fetch_unclaimed_jobs
 
 class JobView(discord.ui.View):
     def __init__(self, job_id):
@@ -55,12 +55,11 @@ async def update_job(interaction: discord.Interaction, view, job_id: str, button
         if not claimer_id:
             claimer_id = interaction.user.id
             await update_job_claimer(job_id, claimer_id)
-            await interaction.response.send_message(f"Task claimed by {interaction.user.mention}!", ephemeral=True)
         else:
             await interaction.response.defer()
             
     elif button == "unclaim_":
-        if claimer_id == interaction.user.id or author.id:
+        if claimer_id == interaction.user.id or author.id == interaction.user.id:
             claimer_id = None
             await update_job_claimer(job_id, claimer_id)
         await interaction.response.defer()
@@ -71,27 +70,29 @@ async def update_job(interaction: discord.Interaction, view, job_id: str, button
         await interaction.message.delete()
         return
       elif interaction.user.id == claimer_id:
-        await interaction.response.send_message(f"<@{author_id}>, {interaction.user.mention} has ended your task!")
+        await interaction.response.send_message(f"<@{author_id}>, {interaction.user.mention} has finished your task!")
         await delete_job(job_id)
         await interaction.message.delete()
         return
       else:
         await interaction.response.defer()
 
-    embed = await embed_job(author, item, quantity, reward, details, time_limit, claimer_id)
+    embed = embed_job(author, item, quantity, reward, details, time_limit, claimer_id)
     await interaction.message.edit(embed=embed, view=view)
       
 
-async def embed_job(author,
+def embed_job(author,
                     item,
                     quantity,
                     reward,
                     details,
                     time_limit,
                     claimer=None):
+  pixelshine = '<a:PIXELshine1241404259774496878>'
+  coin = '<:pixelcoin:1238636808951038092>'
   embed = discord.Embed(
       title=
-      "<:pixelcoin:1238636808951038092> **New Task Posted!** <:pixelcoin:1238636808951038092>\n",
+      f"{coin}\t**New Task Posted!**\t{coin}\n",
       color=0x00ff00)
   embed.set_author(name=f"Requested by {author.display_name}",
                    icon_url=f"{author.display_avatar}")
@@ -112,6 +113,38 @@ async def create_job(interaction: discord.Interaction, item, quantity, reward, d
     job_id = str(interaction.id)
     await add_job(job_id, interaction.user.id, item, quantity, reward, details, time_limit, None)
     
-    embed = await embed_job(interaction.user, item, quantity, reward, details, time_limit, None)
+    embed = embed_job(interaction.user, item, quantity, reward, details, time_limit, None)
     await interaction.response.send_message(embed=embed, view=JobView(job_id))
     return job_id
+
+async def show_unclaimed_jobs(interaction: discord.Interaction):
+    embed = discord.Embed(title='**Taskboard:**', color=0x00ff00)
+    list = ""
+    for job in await fetch_unclaimed_jobs():
+        job_id, author_id, item, quantity, reward, details, time_limit, _  = job
+        member = None
+        if interaction.guild is not None:    
+            member = interaction.guild.get_member(author_id)
+        author = await interaction.client.fetch_user(author_id) if member is None else member
+        list = list + '----------------------------------------------------\n'
+        list = list + f"**Requested by** <@{author.id}>\n"
+        list = list + f"> **{quantity}** x {item} **---->** {reward}\n"
+        if details != 'N/A':
+            details = format_details_as_blockquote(details)
+            list = list + f"> **Additional Info:** \n{details}\n"
+        list = list + f"> Expiration Time: <t:{int(time.time()+(float(time_limit)*3600.0))}:R>\n"
+
+    list = list + '----------------------------------------------------\n'
+    list = list + "\n Create your own task using `/task create`"
+    embed.add_field(name='', value=list, inline=False)
+    return embed
+
+# Helper function for /taskboard
+def format_details_as_blockquote(details: str) -> str:
+    lines = details.split('\n')
+    formatted_lines = [f"> {line}" for line in lines]
+    return '\n'.join(formatted_lines)
+
+#async def post_board(interaction: discord.Interaction):
+
+

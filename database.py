@@ -13,11 +13,6 @@ async def init_db():
             (id text PRIMARY KEY, handle text, emblem text,
             shard_price integer, land_count integer)'''
         )
-        await c.execute(
-            '''CREATE TABLE IF NOT EXISTS discord_servers
-            (server_id text PRIMARY KEY,
-            premium boolean, linked_guild text)'''
-        )
         for skill in SKILLS:
             await c.execute(
                 f'''CREATE TABLE IF NOT EXISTS {skill}
@@ -28,8 +23,8 @@ async def init_db():
 
         await conn.commit()
     # create job database
-    async with aiosqlite.connect('jobs.db') as db:
-        await db.execute('''
+    async with aiosqlite.connect('jobs.db') as jobs:
+        await jobs.execute('''
             CREATE TABLE IF NOT EXISTS jobs (
                 job_id TEXT PRIMARY KEY,
                 author_id INTEGER,
@@ -41,7 +36,21 @@ async def init_db():
                 claimer_id INTEGER
             )
         ''')
-        await db.commit()
+        await jobs.commit()
+
+#    async with aiosqlite.connect('discord.db') as discord:
+#        await discord.execute(
+#        '''CREATE TABLE IF NOT EXISTS discord_servers
+#        (server_id text PRIMARY KEY,
+#        premium REAL, linked_guild text)'''
+#        )
+#        await discord.execute(
+#            '''CREATE TABLE IF NOT EXISTS discord_users
+#            (user_id text PRIMARY KEY,
+#            wallets text, pixels_accounts text, access_token text, refresh_token text)'''
+#        )
+#        await discord.commit()
+        
     print('Databases Initialized!')
 
 
@@ -119,3 +128,11 @@ async def add_job(job_id, author_id, item, quantity, reward, details, time_limit
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id))
         await db.commit()
+
+async def fetch_unclaimed_jobs():
+    async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT * FROM jobs WHERE claimer_id IS NULL') as cursor:
+        return await cursor.fetchall()
+
+async def fetch_linked_wallets(discord_id):
+    async with aiosqlite.connect('leaderboard.db') as db, db.execute('SELECT * FROM total WHERE linked_discord = ?', (discord_id,)) as cursor:
+        return await cursor.fetchall()

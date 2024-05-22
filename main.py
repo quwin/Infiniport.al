@@ -8,10 +8,12 @@ from constants import TOKEN, NFT_LINK
 from guild import guild_data, guild_update
 from land import speck_data, nft_land_data
 from modal import JobInput
-from job import JobView
-# from collab_land import manage_collab_link
+from job import JobView, show_unclaimed_jobs
+from collab_land import collab_channel, CollabButtons
+from webserver import run_flask, queue
 import aiosqlite
 import aiohttp
+import asyncio
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -27,10 +29,14 @@ async def on_ready():
   print(f'We have logged in as {client.application_id}')
   await init_db()
   await init_job_views(client)
+  client.add_view(CollabButtons())
+  await collab_channel(client)
+  asyncio.create_task(process_queue())
+
   # update_voice_channel_name.start()
   # batch_guild_update.start()
-  batch_speck_update.start()
-  batch_nft_land_update.start()
+  #batch_speck_update.start()
+  #batch_nft_land_update.start()
 
 async def init_job_views(client: discord.Client):
   async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT job_id FROM jobs') as cursor:
@@ -39,9 +45,8 @@ async def init_job_views(client: discord.Client):
   for job_id in jobs:
     client.add_view(JobView(job_id[0]))
 
-@tree.command(name="clear_commands",
-  description="ofc",
- guild=discord.Object(id=1234015429874417706))
+@tree.command(name="clear_commands", description="ofc",
+              guild=discord.Object(id=1234015429874417706))
 async def clear_commands(interaction, server: str | None = None):
   if interaction.user.id != 239235420104163328:
     return
@@ -53,8 +58,7 @@ async def clear_commands(interaction, server: str | None = None):
   await interaction.response.defer()
   print('Command tree removed!')
 
-@tree.command(name="add_commands",
-  description="ofc",
+@tree.command(name="add_commands", description="ofc",
              guild=discord.Object(id=1234015429874417706))
 async def add_commands(interaction, server: str | None = None):
   if interaction.user.id != 239235420104163328:
@@ -65,6 +69,10 @@ async def add_commands(interaction, server: str | None = None):
     await tree.sync(guild=discord.Object(id=int(server)))
   await interaction.response.defer()
   print('Command tree synced!')
+
+async def link_profile(interaction):
+  user_id = interaction.user.id
+  
   
 @tree.command(name="lookup",
               description="Lookup a player's Pixels profile")
@@ -78,12 +86,6 @@ async def lookup(interaction, input: str):
     # commit after user recieves message so they dont need to wait
     await conn.commit()
 
-  pass
-
-
-@commands.hybrid_command()
-async def dbremove(_ctx, mid):
-  await database_remove(mid)
   pass
 
 
@@ -106,21 +108,22 @@ async def leaderboard(interaction,
   await manage_leaderboard(interaction, skill, sort, page_number, server_id)
 
 
-@commands.hybrid_command()
-async def assignguild(ctx, guild_name):
+@tree.command(name="assignguild",
+  description="Look at your guild's Leaderboard!")
+async def assignguild(interaction, guild_name: str):
   async with aiosqlite.connect(
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     data = await guild_data(session, guild_name)
     guild_info = data.get('guild', None)
     if guild_info is None:
+      await interaction.response.send_message(content=f"I could not find a guild with the handle @{guild_name}!", ephemeral=True)
       return
-    guild_handle = guild_info.get('handle', None)
-    if guild_handle is None:
+    guild_id = guild_info.get('id', None)
+    if guild_id is None:
       return
-    await init_guild_db(ctx.guild.id, guild_handle, conn)
+    await init_guild_db(interaction.guild.id, guild_id, conn)
     await guild_update(conn, data)
     await conn.commit()
-
 
 # Define the group
 job_group = app_commands.Group(name="task", description="View, modify, and create tasks for other users to complete!")
@@ -136,7 +139,8 @@ tree.add_command(job_group)
 @tree.command(name="taskboard",
   description="View the tasks available to complete!")
 async def taskboard(interaction: discord.Interaction):
-  await interaction.response.send_modal(JobInput(client))
+  embed = await show_unclaimed_jobs(interaction)
+  await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 @tree.command(name="chibi",
@@ -174,4 +178,15 @@ async def update_voice_channel_name():
   return
 
 
+async def process_queue():
+    while True:
+        user_id, user_wallets = await queue.get()
+        user = client.get_user(user_id)
+        if user:
+            await user.send(f"Your linked wallets: {user_wallets}")
+
 client.run(TOKEN)
+
+if __name__ == "__main__":
+  loop = asyncio.get_event_loop()
+  loop.run_in_executor(None, run_flask)
