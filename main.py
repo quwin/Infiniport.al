@@ -34,7 +34,7 @@ async def on_ready():
   client.add_view(CollabButtons())
   await collab_channel(client)
   asyncio.create_task(process_queue())
-  batch_speck_update.start()
+  # batch_speck_update.start()
   batch_nft_land_update.start()
   # update_voice_channel_name.start()
   # batch_guild_update.start()

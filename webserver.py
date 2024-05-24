@@ -22,7 +22,7 @@ async def get_access_token(auth_code):
             return await response.json()
 
 async def get_user_wallets(access_token, limit=None, pagination_token=None):
-    wallets_url = "https://api.collab.land/user/wallets"
+    wallets_url = "https://api.collab.land/account/wallets"
     params = {}
     if limit is not None:
         params['limit'] = limit
@@ -32,7 +32,7 @@ async def get_user_wallets(access_token, limit=None, pagination_token=None):
     headers = {
         'x-api-key': COLLAB_KEY,
         'accept': 'application/json',
-        'Authorization': f"AE <{access_token}>"
+        'Authorization': f"AE {access_token}"
     }
 
     async with aiohttp.ClientSession() as session, session.get(wallets_url, headers=headers, params=params) as response:
