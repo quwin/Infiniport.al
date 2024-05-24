@@ -1,12 +1,9 @@
-# webserver.py
 from flask import Flask, request, redirect, url_for
+from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY
 import aiohttp
 import asyncio
-from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY
 
 app = Flask(__name__)
-
-queue = asyncio.Queue()
 
 async def get_access_token(auth_code):
     token_url = "https://api.collab.land/oauth2/token"
@@ -50,8 +47,7 @@ def oauth2_callback():
         user_wallets = loop.run_until_complete(get_user_wallets(access_token))
         print(user_wallets)
         user_id = int(state)
-        asyncio.run_coroutine_threadsafe(queue.put((user_id, user_wallets)), loop)
-
+        print(f"User ID: \n{user_id}, \n User Wallets: \n{user_wallets}")
         return redirect(url_for('success'))
     else:
         return redirect(url_for('error'))
@@ -66,3 +62,6 @@ def error():
 
 def run_flask():
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+
+if __name__ == "__main__":
+    run_flask()

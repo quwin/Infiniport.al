@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 from profile_utils import lookup_profile, embed_profile
-from database import init_db, database_remove, init_guild_db
+from database import init_db, init_guild_db
 from leaderboard import manage_leaderboard
 from constants import TOKEN, NFT_LINK
 from guild import guild_data, guild_update
@@ -10,12 +10,8 @@ from land import speck_data, nft_land_data
 from modal import JobInput
 from job import JobView, show_unclaimed_jobs
 from collab_land import collab_channel, CollabButtons
-from webserver import run_flask, queue
-from concurrent.futures import ThreadPoolExecutor
 import aiosqlite
 import aiohttp
-import asyncio
-
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -33,7 +29,6 @@ async def on_ready():
   await init_job_views(client)
   client.add_view(CollabButtons())
   await collab_channel(client)
-  asyncio.create_task(process_queue())
   # batch_speck_update.start()
   batch_nft_land_update.start()
   # update_voice_channel_name.start()
@@ -171,19 +166,4 @@ async def update_voice_channel_name():
   guild_id = 880961748092477453
   return
 
-
-async def process_queue():
-  while True:
-      user_id, user_wallets = await queue.get()
-      user = client.get_user(user_id)
-      if user:
-          await user.send(f"Your linked wallets: {user_wallets}")
-
-def run_bot():
-  client.run(TOKEN)
-
-if __name__ == "__main__":
-  loop = asyncio.get_event_loop()
-  executor = ThreadPoolExecutor()
-  loop.run_in_executor(executor, run_flask)
-  loop.run_until_complete(run_bot())
+client.run(TOKEN)
