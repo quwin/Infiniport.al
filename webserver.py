@@ -17,8 +17,7 @@ async def get_access_token(auth_code):
         "client_secret": COLLAB_SECRET,
         "redirect_uri": REDIRECT_URI,
     }
-    async with aiohttp.ClientSession() as session:
-        async with session.post(token_url, data=data) as response:
+    async with aiohttp.ClientSession() as session, session.post(token_url, data=data) as response:
             return await response.json()
 
 async def get_user_wallets(access_token, limit=None, pagination_token=None):
@@ -46,9 +45,11 @@ def oauth2_callback():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         access_token_data = loop.run_until_complete(get_access_token(auth_code))
+        print(access_token_data)
         access_token = access_token_data.get("access_token")
+        print(access_token)
         user_wallets = loop.run_until_complete(get_user_wallets(access_token))
-
+        print(user_wallets)
         user_id = int(state)
         asyncio.run_coroutine_threadsafe(queue.put((user_id, user_wallets)), loop)
 
