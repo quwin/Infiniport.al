@@ -31,7 +31,7 @@ async def get_user_wallets(access_token, limit=None, pagination_token=None):
     headers = {
         'x-api-key': COLLAB_KEY,
         'accept': 'application/json',
-        'Authorization': f"AE {access_token}"
+        'Authorization': f"Bearer {access_token}"
     }
 
     async with aiohttp.ClientSession() as session, session.get(wallets_url, headers=headers, params=params) as response:
@@ -47,7 +47,6 @@ def oauth2_callback():
         access_token_data = loop.run_until_complete(get_access_token(auth_code))
         print(access_token_data)
         access_token = access_token_data.get("access_token")
-        print(access_token)
         user_wallets = loop.run_until_complete(get_user_wallets(access_token))
         print(user_wallets)
         user_id = int(state)
