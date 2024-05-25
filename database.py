@@ -143,6 +143,7 @@ async def add_collab_tokens(user_id, access_token, refresh_token):
         VALUES (?, ?, ?)''',
         (user_id, access_token, refresh_token)
         )
+        await db.commit()
 
 async def add_collab_wallets(user_id, wallets, pixels_ids):
     async with aiosqlite.connect('discord.db') as db:
@@ -151,3 +152,5 @@ async def add_collab_wallets(user_id, wallets, pixels_ids):
         VALUES (?, ?, ?)''',
         (user_id, wallets, pixels_ids)
         )
+        await db.commit()
+        print(f"Inserted {wallets} linked to {pixels_ids} into database for {user_id}!")
