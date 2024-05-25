@@ -1,9 +1,6 @@
-import aiosqlite
 import discord
-import aiohttp
 from database import fetch_linked_wallets
-from constants import COLLAB_KEY, COLLAB_SECRET, COLLAB_ID, REDIRECT_URI
-
+from constants import COLLAB_ID, REDIRECT_URI
 
 class CollabButtons(discord.ui.View):
     def __init__(self):
@@ -27,52 +24,24 @@ class CollabButtons(discord.ui.View):
 
     async def start_button_callback(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        await link_account(interaction)
+        await manage_collab_link(interaction)
     
     async def why_button_callback(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Collab.Land is used for...", ephemeral=True)
-        
-    
-# Request linked wallet(s) from Collab.land API
-async def request_linked_wallets(session, access_token, limit=None, pagination_token=None):
-    url = "https://api.collab.land/user/wallets"
-
-    params = {}
-    if limit is not None:
-        params['limit'] = limit
-    if pagination_token is not None:
-        params['paginationToken'] = pagination_token
-
-    headers = {
-        'x-api-key': COLLAB_KEY,
-        'accept': 'application/json',
-        'Authorization': f"AE <{access_token}>"
-    }
-    
-    async with session.get(url, headers=headers, params=params) as response:
-        print(f'{response.status}')
-        if response.status == 200:
-            print(f'{await response.json()}')
-            return await response.json()
-        else:
-            return None
+        await interaction.response.send_message(
+            "Collab.Land is a robust, easy to connect, and easy to integrate service which allows servers to link Discord accounts to Crypto Wallets. \n \n" +
+            "This application uses your crypto wallets you have linked to your Pixels account in order to verify that you have ownership of the given Pixels account.\n \n" +
+            "Collab.Land is used by many Pixels Guilds discords to verify shard ownership, and is even used by the Official Pixels discord itself. \n \n" + 
+            "When linking your crypto wallet with Collab.Land and Cookie Monster, I will not have access to any personal or sensitive data. I will not ask for users to send any transactions, or ask for a seed phrase. \n \n Thanks.",
+            ephemeral=True)
 
 
-async def manage_collab_link(interaction, session):
-    existing_wallets = await fetch_linked_wallets(interaction.user.id)
-    if existing_wallets:
-        embed = show_linked_accounts(existing_wallets)
-        await interaction.followup.send(embed=embed, ephermial=True)
-    else:
-        access_token = ''
-        find_wallet_data = await request_linked_wallets(session, access_token)
-        if linked_wallet_data is None:
-          return
-        confirmed_accounts = []
-        for wallet in linked_wallet_data.get('items'):
-          wallet_address = wallet.get('address')
+async def manage_collab_link(interaction):
+    user_id = interaction.user.id
+    existing_wallets = await fetch_linked_wallets(user_id)
+    (embed, view) = show_linked_accounts(existing_wallets, user_id)
+    await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
-
+# Embed for showing how to link your Pixels Account to the Bot
 def collab_embed():
     embed = discord.Embed(
           title="Link your Pixels.xyz account",
@@ -84,8 +53,8 @@ def collab_embed():
                   "This verification process is done through <@704521096837464076>",
                   inline=False)
     return embed
-    
 
+#Function to create and manage collab_embed()
 async def collab_channel(client):
     channel_id = 1234015430381932577
     channel = client.get_channel(channel_id)
@@ -93,28 +62,47 @@ async def collab_channel(client):
     if channel:
         await channel.send(embed=collab_embed(), view=CollabButtons())
 
-async def link_account(interaction):
+# Function to show the linked accounts, and allow people to link their accounts
+def show_linked_accounts(existing_wallets, user_id):
+    if existing_wallets:
+        embed = discord.Embed(
+              title="My Connected Pixels.xyz Accounts",
+              description="Data powered by Collab.Land\n",
+              color=0x00ff00)
+        accounts = ''
+        for wallet in existing_wallets:
+            accounts = accounts + f"{wallet[0]} - {'{:,}'.format(int(wallet[1]))} \n"
+            
+        embed.add_field(name="", value=accounts, inline=False)
+    else:
+        embed = discord.Embed(
+              title="My Connected Pixels.xyz Accounts",
+              description="Data powered by <@704521096837464076>\n",
+              color=0x00ff00)
+        accounts = 'You have no accounts linked! Please link one by clicking the button below.'
+        embed.add_field(name="", value=accounts, inline=False)
+
+    view = discord.ui.View()
     auth_url = (
         f"https://api.collab.land/oauth2/authorize"
         "?response_type=code"
         f"&client_id={COLLAB_ID}"
         f"&redirect_uri={REDIRECT_URI}"
         f"&scope=user:wallet:read"
-        f"&state={interaction.user.id}"
+        f"&state={user_id}"
     )
-    await interaction.followup.send(
-        f"Please link your account by visiting this URL: {auth_url}",
-        ephemeral=True
+    cont_button = discord.ui.Button(
+        label="Use Connected Accounts",
+        style=discord.ButtonStyle.blurple,
+        
+    )
+    link_button = discord.ui.Button(
+        label="Add a new Account",
+        style=discord.ButtonStyle.grey,
+        url=auth_url
     )
 
-async def show_linked_accounts(existing_wallets):
-    embed = discord.Embed(
-          title="My Connected Pixels.xyz Accounts",
-          description="Data powered by <@704521096837464076>\n",
-          color=0x00ff00)
-    accounts = ''
-    for wallet in existing_wallets:
-        accounts = accounts + f"{wallet[0]} - {'{:,}'.format(int(wallet[1]))} \n"
-        
-    embed.add_field(name="", value=accounts, inline=False)
-    return embed
+    view.add_item(item=cont_button)
+    view.add_item(item=link_button)
+
+    return embed, view

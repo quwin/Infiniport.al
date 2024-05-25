@@ -5,21 +5,19 @@ import urllib.parse
 import discord
 
 async def lookup_profile(c, input):
-  async with aiohttp.ClientSession() as session:
-    # Asynchronous GET request
-    async with session.get(PROFILE_MID_LINK + input) as response:
-      if response.status != 200:
-        print(f"Searched for name: {input}")
-        data = await profile_finder(session, input)
-      else:
-        data = await response.json()  
+  async with aiohttp.ClientSession() as session, session.get(PROFILE_MID_LINK + input) as response:
+    if response.status != 200:
+      print(f"Searched for name: {input}")
+      data = await profile_finder(session, input)
+    else:
+      data = await response.json()  
 
-    (total_levels, total_skills) = total_stats(data['levels'])
+  (total_levels, total_skills) = total_stats(data['levels'])
 
-    #Update Skills in leaderboard:
-    await update_skills(c, data, total_levels, total_skills)
+  #Update Skills in leaderboard:
+  await update_skills(c, data, total_levels, total_skills)
 
-    return data, total_levels, total_skills
+  return data, total_levels, total_skills
 
 def total_stats(levels):
   total_level = 0
@@ -76,5 +74,5 @@ async def profile_finder(session, input):
     id = input if not search_json else search_json[0]['_id']
     async with session.get(PROFILE_MID_LINK + id) as profile_response:
       if profile_response.status != 200:
-        return None, None, None
+        return None
       return await profile_response.json()

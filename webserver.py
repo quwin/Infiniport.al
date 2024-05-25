@@ -1,5 +1,7 @@
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, render_template_string
 from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY
+from database import add_collab_tokens, add_collab_wallets
+from profile_utils import profile_finder
 import aiohttp
 import asyncio
 
@@ -16,7 +18,8 @@ async def get_access_token(auth_code):
     }
     async with aiohttp.ClientSession() as session, session.post(token_url, data=data) as response:
             return await response.json()
-
+        
+# Request linked wallet(s) from Collab.land API
 async def get_user_wallets(access_token, limit=None, pagination_token=None):
     wallets_url = "https://api.collab.land/account/wallets"
     params = {}
@@ -34,27 +37,68 @@ async def get_user_wallets(access_token, limit=None, pagination_token=None):
     async with aiohttp.ClientSession() as session, session.get(wallets_url, headers=headers, params=params) as response:
         return await response.json()
 
+# Async wrapper for looking for a given profile from their address from the Pixels.xyz API
+async def look_for_profile(wallet_address):
+    async with aiohttp.ClientSession() as session:
+        return await profile_finder(session, wallet_address)
+
 @app.route("/oauth2/callback")
 def oauth2_callback():
     auth_code = request.args.get("code")
-    state = request.args.get("state")
-    if auth_code and state:
+    user_id = request.args.get("state")
+    if auth_code and user_id:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         access_token_data = loop.run_until_complete(get_access_token(auth_code))
-        print(access_token_data)
+        
         access_token = access_token_data.get("access_token")
-        user_wallets = loop.run_until_complete(get_user_wallets(access_token))
-        print(user_wallets)
-        user_id = int(state)
-        print(f"User ID: \n{user_id}, \n User Wallets: \n{user_wallets}")
+        refresh_token = access_token_data.get("refresh_token")
+        loop.run_until_complete(add_collab_tokens(user_id, access_token, refresh_token))
+        
+        user_wallets_data = loop.run_until_complete(get_user_wallets(access_token))
+        addresses = []
+        player_ids = []
+        for wallet in user_wallets_data.get("items"):
+            type = wallet.get("walletType")
+            if type == "evm" or type == 'metamask' or type == 'ronin':
+                address = wallet.get("address")
+                account_data = loop.run_until_complete(look_for_profile(address))
+                if address and account_data:
+                    addresses.append(address)
+                    player_ids.append(account_data.get("data"))
+                    
+        if addresses and player_ids:            
+            loop.run_until_complete(add_collab_wallets(
+                user_id, 
+                " ".join(addresses), 
+                " ".join(player_ids)
+                )
+            )
+            
+        print(f"User ID: \n{user_id}, \n User Wallets: \n{user_wallets_data}")
         return redirect(url_for('success'))
     else:
         return redirect(url_for('error'))
 
 @app.route("/success")
 def success():
-    return "<h1>Authorization successful! You can close this window.</h1>"
+    return render_template_string("""
+        <html>
+        <body>
+            <h1>Authorization successful!</h1>
+            <p>This tab will close automatically.</p>
+            <script type="text/javascript">
+                window.onload = function() {
+                    window.open('', '_self', ''); 
+                    window.close(); 
+                    setTimeout(function() { 
+                        alert("Please close this tab manually."); 
+                    }, 1000);
+                }
+            </script>
+        </body>
+        </html>
+    """)
 
 @app.route("/error")
 def error():

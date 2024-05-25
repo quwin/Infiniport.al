@@ -37,22 +37,21 @@ async def init_db():
             )
         ''')
         await jobs.commit()
-
-#    async with aiosqlite.connect('discord.db') as discord:
-#        await discord.execute(
-#        '''CREATE TABLE IF NOT EXISTS discord_servers
-#        (server_id text PRIMARY KEY,
-#        premium REAL, linked_guild text)'''
-#        )
-#        await discord.execute(
-#            '''CREATE TABLE IF NOT EXISTS discord_users
-#            (user_id text PRIMARY KEY,
-#            wallets text, pixels_accounts text, access_token text, refresh_token text)'''
-#        )
-#        await discord.commit()
+    # create discord stats database
+    async with aiosqlite.connect('discord.db') as discord:
+        await discord.execute(
+        '''CREATE TABLE IF NOT EXISTS discord_servers
+        (server_id text PRIMARY KEY,
+        premium REAL, linked_guild text)'''
+        )
+        await discord.execute(
+            '''CREATE TABLE IF NOT EXISTS discord_users
+            (user_id text PRIMARY KEY,
+            wallets text, pixels_ids text, access_token text, refresh_token text)'''
+        )
+        await discord.commit()
         
     print('Databases Initialized!')
-
 
 
 async def update_skills(c, json, total_level, total_exp):
@@ -133,6 +132,22 @@ async def fetch_unclaimed_jobs():
     async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT * FROM jobs WHERE claimer_id IS NULL') as cursor:
         return await cursor.fetchall()
 
-async def fetch_linked_wallets(discord_id):
-    async with aiosqlite.connect('leaderboard.db') as db, db.execute('SELECT * FROM total WHERE linked_discord = ?', (discord_id,)) as cursor:
+async def fetch_linked_wallets(user_id):
+    async with aiosqlite.connect('discord.db') as db, db.execute('SELECT * FROM discord_users WHERE user_id = ?', (user_id,)) as cursor:
         return await cursor.fetchall()
+
+async def add_collab_tokens(user_id, access_token, refresh_token):
+    async with aiosqlite.connect('discord.db') as db:
+        await db.execute(
+        '''INSERT OR REPLACE INTO discord_users (user_id, access_token, refresh_token)
+        VALUES (?, ?, ?)''',
+        (user_id, access_token, refresh_token)
+        )
+
+async def add_collab_wallets(user_id, wallets, pixels_ids):
+    async with aiosqlite.connect('discord.db') as db:
+        await db.execute(
+        '''INSERT OR REPLACE INTO discord_users (user_id, wallets, pixels_ids)
+        VALUES (?, ?, ?)''',
+        (user_id, wallets, pixels_ids)
+        )
