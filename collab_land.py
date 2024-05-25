@@ -42,7 +42,7 @@ class CollabButtons(discord.ui.View):
 async def manage_collab_link(interaction):
     user_id = str(interaction.user.id)
     existing_wallets = await fetch_linked_wallets(user_id)
-    (embed, view) = show_linked_accounts(existing_wallets, user_id)
+    (embed, view) = await show_linked_accounts(existing_wallets, user_id)
     await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
 # Embed for showing how to link your Pixels Account to the Bot
