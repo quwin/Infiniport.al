@@ -1,6 +1,10 @@
 import discord
 from database import fetch_linked_wallets
 from constants import COLLAB_ID, REDIRECT_URI
+from rate_limiter import AdaptiveRateLimiter
+from profile_utils import get_accounts_usernames
+
+userlimiter = AdaptiveRateLimiter(3, 1)
 
 class CollabButtons(discord.ui.View):
     def __init__(self):
@@ -38,7 +42,6 @@ class CollabButtons(discord.ui.View):
 async def manage_collab_link(interaction):
     user_id = str(interaction.user.id)
     existing_wallets = await fetch_linked_wallets(user_id)
-    print(existing_wallets)
     (embed, view) = show_linked_accounts(existing_wallets, user_id)
     await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
@@ -64,15 +67,21 @@ async def collab_channel(client):
         await channel.send(embed=collab_embed(), view=CollabButtons())
 
 # Function to show the linked accounts, and allow people to link their accounts
-def show_linked_accounts(existing_wallets, user_id):
+async def show_linked_accounts(existing_wallets, user_id):
     if existing_wallets:
         embed = discord.Embed(
               title="My Connected Pixels.xyz Accounts",
-              description="Data powered by Collab.Land\n",
+              description="Data powered by Collab.Land\n \n",
               color=0x00ff00)
         accounts = ''
         for wallet in existing_wallets:
-            accounts = accounts + f"{wallet[0]} - {'{:,}'.format(int(wallet[1]))} \n"
+            # Formats the string into an array + removes duplicate account IDs
+            formatted = list(set(wallet[1].split(" ")))
+            
+            usernames = await get_accounts_usernames(userlimiter, formatted)
+            for mid in formatted:
+                accounts += f"-{usernames.get(mid)} \n"
+
             
         embed.add_field(name="", value=accounts, inline=False)
     else:

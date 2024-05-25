@@ -76,3 +76,11 @@ async def profile_finder(session, input):
       if profile_response.status != 200:
         return None
       return await profile_response.json()
+
+async def get_accounts_usernames(limiter, mids):
+  link = 'https://pixels-server.pixels.xyz/v1/player/usernames?'
+  extension = ''
+  for mid in mids:
+    extension += f'mid={mid}&'
+  async with limiter, aiohttp.ClientSession() as session, session.get(link + extension) as response:
+    return await response.json()

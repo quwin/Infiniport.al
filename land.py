@@ -1,38 +1,15 @@
 import asyncio
 import aiohttp
 from constants import SKILLS, SPECK_OWNER_LINK, BATCH_SIZE, GIVE_UP, FIRST_SPECK, SPECK_RATE, NFT_LAND_LINK
-import time
+from rate_limiter import AdaptiveRateLimiter
 
-# Limits the number of requests to the API to avoid rate limiting, while not limiting speed if the loop takes longer than the rate limit
-class AdaptiveRateLimiter:
-    def __init__(self, calls, per_second):
-        self.calls = calls
-        self.per_second = per_second
-        self.semaphore = asyncio.Semaphore(calls)
-        self.times = asyncio.Queue(maxsize=calls)
-
-    async def __aenter__(self):
-        await self.semaphore.acquire()
-        current_time = time.time()
-        if self.times.qsize() == self.calls:
-            oldest_time = await self.times.get()
-            time_to_wait = oldest_time + self.per_second - current_time
-            if time_to_wait > 0:
-                await asyncio.sleep(time_to_wait)
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb):
-        current_time = time.time()
-        await self.times.put(current_time)
-        self.semaphore.release()
+limiter = AdaptiveRateLimiter(SPECK_RATE, 1)
 
 async def nft_land_data(conn, session):
     i = 1
     total_data_batch = []
     skill_data_batch = {skill: [] for skill in SKILLS}
     cursor = await conn.cursor()
-    limiter = AdaptiveRateLimiter(SPECK_RATE, 1)
-
     
     while i <= 5000:
         async with limiter, session.get(NFT_LAND_LINK + str(i)) as response:
@@ -76,7 +53,7 @@ async def speck_data(conn, session):
     total_data_batch = []
     skill_data_batch = {skill: [] for skill in SKILLS}
     cursor = await conn.cursor()
-    limiter = AdaptiveRateLimiter(SPECK_RATE, 1)  # SPECK_RATE requests per second
+    limiter = AdaptiveRateLimiter(SPECK_RATE, 1)
 
     while True:
         if i % BATCH_SIZE == 0:

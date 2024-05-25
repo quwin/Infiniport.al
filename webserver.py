@@ -2,10 +2,14 @@ from flask import Flask, request, redirect, url_for, render_template_string
 from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY
 from database import add_collab_tokens, add_collab_wallets
 from profile_utils import profile_finder
+from rate_limiter import AdaptiveRateLimiter
 import aiohttp
 import asyncio
 
 app = Flask(__name__)
+
+limiter = AdaptiveRateLimiter(3, 1)
+collab_limiter = AdaptiveRateLimiter(9, 1)
 
 async def get_access_token(auth_code):
     token_url = "https://api.collab.land/oauth2/token"
@@ -16,7 +20,7 @@ async def get_access_token(auth_code):
         "client_secret": COLLAB_SECRET,
         "redirect_uri": REDIRECT_URI,
     }
-    async with aiohttp.ClientSession() as session, session.post(token_url, data=data) as response:
+    async with collab_limiter, aiohttp.ClientSession() as session, session.post(token_url, data=data) as response:
             return await response.json()
         
 # Request linked wallet(s) from Collab.land API
@@ -34,12 +38,12 @@ async def get_user_wallets(access_token, limit=None, pagination_token=None):
         'Authorization': f"Bearer {access_token}"
     }
 
-    async with aiohttp.ClientSession() as session, session.get(wallets_url, headers=headers, params=params) as response:
+    async with collab_limiter, aiohttp.ClientSession() as session, session.get(wallets_url, headers=headers, params=params) as response:
         return await response.json()
 
 # Async wrapper for looking for a given profile from their address from the Pixels.xyz API
 async def look_for_profile(wallet_address):
-    async with aiohttp.ClientSession() as session:
+    async with limiter, aiohttp.ClientSession() as session:
         return await profile_finder(session, wallet_address)
 
 @app.route("/oauth2/callback")
