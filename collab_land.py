@@ -42,7 +42,6 @@ class CollabButtons(discord.ui.View):
 async def manage_collab_link(interaction):
     user_id = str(interaction.user.id)
     existing_wallets = await fetch_linked_wallets(user_id)
-    print(f"existing wallets: {existing_wallets}")
     (embed, view) = await show_linked_accounts(existing_wallets, user_id)
     await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
@@ -77,7 +76,7 @@ async def show_linked_accounts(existing_wallets, user_id):
         accounts = ''
         for wallet in existing_wallets:
             # Formats the string into an array + removes duplicate account IDs
-            formatted = list(set(wallet[1].split(" ")))
+            formatted = list(set(wallet[2].split(" ")))
             print(f"List: {formatted} \n")
             usernames = await get_accounts_usernames(userlimiter, formatted)
             for mid in formatted:
