@@ -65,7 +65,7 @@ def oauth2_callback():
                 account_data = loop.run_until_complete(look_for_profile(address))
                 if address and account_data:
                     addresses.append(address)
-                    player_ids.append(account_data.get("data"))
+                    player_ids.append(account_data.get("_id"))
                     
         if addresses and player_ids:            
             loop.run_until_complete(add_collab_wallets(
