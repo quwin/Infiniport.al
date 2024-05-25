@@ -92,7 +92,7 @@ def success():
                     window.open('', '_self', ''); 
                     window.close(); 
                     setTimeout(function() { 
-                        alert("Please close this tab manually."); 
+                        alert("Please close this tab."); 
                     }, 1000);
                 }
             </script>

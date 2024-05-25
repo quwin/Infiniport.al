@@ -36,8 +36,9 @@ class CollabButtons(discord.ui.View):
 
 
 async def manage_collab_link(interaction):
-    user_id = interaction.user.id
+    user_id = str(interaction.user.id)
     existing_wallets = await fetch_linked_wallets(user_id)
+    print(existing_wallets)
     (embed, view) = show_linked_accounts(existing_wallets, user_id)
     await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
