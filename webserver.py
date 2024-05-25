@@ -59,14 +59,17 @@ def oauth2_callback():
         addresses = []
         player_ids = []
         for wallet in user_wallets_data.get("items"):
+            print(wallet)
             type = wallet.get("walletType")
+            print(type)
             if type == "evm" or type == 'metamask' or type == 'ronin':
                 address = wallet.get("address")
                 account_data = loop.run_until_complete(look_for_profile(address))
                 if address and account_data:
                     addresses.append(address)
                     player_ids.append(account_data.get("_id"))
-                    
+
+        print(f"User {user_id} has {addresses} linked to {player_ids}")
         if addresses and player_ids:            
             loop.run_until_complete(add_collab_wallets(
                 user_id, 
@@ -74,6 +77,7 @@ def oauth2_callback():
                 " ".join(player_ids)
                 )
             )
+            
             
         print(f"User ID: \n{user_id}, \n User Wallets: \n{user_wallets_data}")
         return redirect(url_for('success'))
