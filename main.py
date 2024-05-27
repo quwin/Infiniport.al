@@ -4,7 +4,7 @@ from discord import app_commands
 from profile_utils import lookup_profile, embed_profile
 from database import init_db, init_guild_db
 from leaderboard import manage_leaderboard
-from constants import TOKEN, NFT_LINK
+from constants import TOKEN, NFT_LINK, SkillEnum, SortEnum
 from guild import guild_data, guild_update
 from land import speck_data, nft_land_data
 from modal import JobInput
@@ -51,8 +51,7 @@ async def clear_commands(interaction, server: str | None = None):
     await tree.sync()
   else:
     await tree.sync(guild=discord.Object(id=server))
-  await interaction.response.defer()
-  print('Command tree removed!')
+  await interaction.response.send_message('Command tree removed!', ephemeral=True)
 
 @tree.command(name="add_commands", description="ofc",
              guild=discord.Object(id=1234015429874417706))
@@ -63,8 +62,7 @@ async def add_commands(interaction, server: str | None = None):
     await tree.sync()
   else:
     await tree.sync(guild=discord.Object(id=int(server)))
-  await interaction.response.defer()
-  print('Command tree synced!')
+  await interaction.response.send_message('Command tree synced!', ephemeral=True)
 
 async def link_profile(interaction):
   user_id = interaction.user.id
@@ -89,24 +87,33 @@ async def lookup(interaction, input: str):
 
   pass
 
-
 @tree.command(name="global_leaderboard",
               description="Look at a ranking of (almost) every Pixels Player!")
-async def global_leaderboard(interaction,
-                             skill: str = 'total',
-                             sort: str = 'level',
+@app_commands.describe(skill="Select the skill to display",
+                       sort="Select the sorting method",
+                       page_number="Page number of the leaderboard")
+async def global_leaderboard(interaction: discord.Interaction,
+                             skill: SkillEnum = SkillEnum.NONE,
+                             sort: SortEnum = SortEnum.LEVEL,
                              page_number: int = 1):
-  await manage_leaderboard(interaction, skill, sort, page_number)
+  skill_value = skill.value
+  sort_value = sort.value
+  await manage_leaderboard(interaction, skill_value, sort_value, page_number)
 
 
 @tree.command(name="leaderboard",
-              description="Look at your guild's Leaderboard!")
-async def leaderboard(interaction,
-                      skill: str = 'total',
-                      sort: str = 'level',
-                      page_number: int = 1):
+              description="Look at your server's Leaderboard!")
+@app_commands.describe(skill="Select the skill to display",
+                       sort="Select the sorting method",
+                       page_number="Page number of the leaderboard")
+async def leaderboard(interaction: discord.Interaction,
+                             skill: SkillEnum = SkillEnum.NONE,
+                             sort: SortEnum = SortEnum.LEVEL,
+                             page_number: int = 1):
+  skill_value = skill.value
+  sort_value = sort.value
   server_id = interaction.guild.id
-  await manage_leaderboard(interaction, skill, sort, page_number, server_id)
+  await manage_leaderboard(interaction, skill_value, sort_value, page_number, server_id)
 
 
 @tree.command(name="assignguild",
@@ -157,7 +164,7 @@ async def batch_speck_update():
     await speck_data(conn, session)
 
 
-@tasks.loop(minutes=60)
+@tasks.loop(minutes=120)
 async def batch_nft_land_update():
   async with aiosqlite.connect(
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:

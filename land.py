@@ -29,7 +29,7 @@ async def nft_land_data(conn, session):
             prep_player_info(player_data, total_data_batch, skill_data_batch)
             i += 1
     #After scanning all 5,000 Lands
-    print(f'{i} Lands scanned.')
+    print(f'{i-1} Lands scanned.')
     await batch_update_players(cursor, total_data_batch, skill_data_batch)
     await conn.commit()
     limiter.reset()
