@@ -40,7 +40,7 @@ async def init_job_views(client: discord.Client):
   for job_id in jobs:
     client.add_view(JobView(job_id[0]))
 
-@tree.command(name="clear_commands", description="",
+@tree.command(name="clear_commands", description="Clear commands",
               guild=discord.Object(id=1234015429874417706))
 async def clear_commands(interaction, server: str | None = None):
   if interaction.user.id != 239235420104163328:
@@ -52,7 +52,7 @@ async def clear_commands(interaction, server: str | None = None):
     await tree.sync(guild=discord.Object(id=server))
   await interaction.response.send_message('Command tree removed!', ephemeral=True)
 
-@tree.command(name="add_commands", description="",
+@tree.command(name="add_commands", description="Add commands",
              guild=discord.Object(id=1234015429874417706))
 async def add_commands(interaction, server: str | None = None):
   if interaction.user.id != 239235420104163328:
