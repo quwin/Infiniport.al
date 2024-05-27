@@ -12,6 +12,8 @@ async def lookup_profile(c, input):
     else:
       data = await response.json()  
 
+  if data is None:
+    return None
   (total_levels, total_skills) = total_stats(data['levels'])
 
   #Update Skills in leaderboard:
@@ -52,6 +54,7 @@ def embed_profile(data, total_levels, total_skills):
 
   # Thumbnail image data
   image_url = data.get('currentAvatar', {}).get('pieces', {}).get('image', None)
+  print(image_url)
   if image_url:
     embed.set_thumbnail(url=image_url)
 
@@ -71,12 +74,14 @@ async def profile_finder(session, input):
       for wallet in profile['cryptoWallets']:
         if wallet['address'] == input:
           return profile
-    id = input if not search_json else search_json[0]['_id']
-    async with session.get(PROFILE_MID_LINK + id) as profile_response:
-      if profile_response.status != 200:
-        return None
-      return await profile_response.json()
-
+    if search_json:
+      return search_json[0]
+    else: 
+      async with session.get(PROFILE_MID_LINK + input) as profile_response:
+        if profile_response.status != 200:
+          return None
+        return await profile_response.json()
+    
 async def get_accounts_usernames(limiter, mids):
   link = 'https://pixels-server.pixels.xyz/v1/player/usernames?'
   extension = ''

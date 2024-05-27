@@ -75,11 +75,16 @@ async def link_profile(interaction):
 async def lookup(interaction, input: str):
   async with aiosqlite.connect('leaderboard.db') as conn:
     c = await conn.cursor()
-    (data, total_levels, total_skills) = await lookup_profile(c, input)
+    result = await lookup_profile(c, input)
+    if result is None:
+      string = f"Could not find the player `{input}`. Please try again"
+      await interaction.response.send_message(string, ephemeral=True)
+      return
+    (data, total_levels, total_skills) = result
 
     embed = embed_profile(data, total_levels, total_skills)
     await interaction.response.send_message(embed=embed)
-    # commit after user recieves message so they dont need to wait
+
     await conn.commit()
 
   pass
