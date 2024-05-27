@@ -15,7 +15,7 @@ class AdaptiveRateLimiter:
             oldest_time = await self.times.get()
             time_to_wait = oldest_time + self.per_second - current_time
             if time_to_wait > 0:
-                print(f'Waiting for {time_to_wait:.2f} seconds at limiter')
+#                print(f'Waiting for {time_to_wait:.2f} seconds at limiter')
                 await asyncio.sleep(time_to_wait)
         return self
 
