@@ -77,7 +77,7 @@ async def lookup(interaction, input: str):
     c = await conn.cursor()
     (data, total_levels, total_skills) = await lookup_profile(c, input)
 
-    embed = await embed_profile(data, total_levels, total_skills)
+    embed = embed_profile(data, total_levels, total_skills)
     await interaction.response.send_message(embed=embed)
     # commit after user recieves message so they dont need to wait
     await conn.commit()

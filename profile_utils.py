@@ -31,7 +31,7 @@ def total_stats(levels):
   return total_level, total_exp
 
 
-async def embed_profile(data, total_levels, total_skills):
+def embed_profile(data, total_levels, total_skills):
   embed = discord.Embed(title=f"**{data['username']}**",
   description=f"**User ID**: `{data['_id']}`",
   color=0x00ff00)
