@@ -1,7 +1,7 @@
 import asyncio
-import aiohttp
 from constants import SKILLS, SPECK_OWNER_LINK, BATCH_SIZE, GIVE_UP, FIRST_SPECK, SPECK_RATE, NFT_LAND_LINK
 from rate_limiter import AdaptiveRateLimiter
+from database import batch_update_players
 
 limiter = AdaptiveRateLimiter(SPECK_RATE, 1)
 
@@ -30,21 +30,9 @@ async def nft_land_data(conn, session):
             i += 1
     #After scanning all 5,000 Lands
     print(f'{i} Lands scanned.')
-    await cursor.executemany(
-        '''INSERT OR REPLACE INTO total (user_id, username, level, exp)
-      VALUES (?, ?, ?, ?)''', total_data_batch)
-    total_data_batch.clear()
-
-    for skill, batch in skill_data_batch.items():
-        await cursor.executemany(
-            f'''INSERT OR REPLACE INTO {skill}
-          (user_id, username, level, exp, current_exp)
-          VALUES (?, ?, ?, ?, ?)''', batch)
-        batch.clear()
-
+    await batch_update_players(cursor, total_data_batch, skill_data_batch)
     await conn.commit()
-
-
+    limiter.reset()
 
         
 async def speck_data(conn, session):
@@ -53,23 +41,11 @@ async def speck_data(conn, session):
     total_data_batch = []
     skill_data_batch = {skill: [] for skill in SKILLS}
     cursor = await conn.cursor()
-    limiter = AdaptiveRateLimiter(SPECK_RATE, 1)
 
     while True:
         if i % BATCH_SIZE == 0:
             print(f'{i} Specks scanned.')
-            await cursor.executemany(
-                '''INSERT OR REPLACE INTO total (user_id, username, level, exp)
-              VALUES (?, ?, ?, ?)''', total_data_batch)
-            total_data_batch.clear()
-
-            for skill, batch in skill_data_batch.items():
-                await cursor.executemany(
-                    f'''INSERT OR REPLACE INTO {skill}
-                  (user_id, username, level, exp, current_exp)
-                  VALUES (?, ?, ?, ?, ?)''', batch)
-                batch.clear()
-
+            await batch_update_players(cursor, total_data_batch, skill_data_batch)
             await conn.commit()
 
         async with limiter, session.get(SPECK_OWNER_LINK + str(FIRST_SPECK + i)) as response:
@@ -85,6 +61,9 @@ async def speck_data(conn, session):
             if player_data is None:
                 if nulls > GIVE_UP:
                     print(f'Player Data not Found for Speck {FIRST_SPECK + i-GIVE_UP} through Speck {FIRST_SPECK + i}, stopping')
+                    await batch_update_players(cursor, total_data_batch, skill_data_batch)
+                    await conn.commit()
+                    limiter.reset()
                     return
                 else:
                     nulls += 1
@@ -95,7 +74,6 @@ async def speck_data(conn, session):
 
             # Places player data into arrays for batches
             prep_player_info(player_data, total_data_batch, skill_data_batch)
-
             i += 1
 
 def prep_player_info(player_data, total_data_batch, skill_data_batch):

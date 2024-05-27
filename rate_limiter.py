@@ -1,7 +1,6 @@
 import asyncio
 import time
 
-# Limits the number of requests to the API to avoid rate limiting, while not limiting speed if the loop takes longer than the rate limit
 class AdaptiveRateLimiter:
     def __init__(self, calls, per_second):
         self.calls = calls
@@ -16,6 +15,7 @@ class AdaptiveRateLimiter:
             oldest_time = await self.times.get()
             time_to_wait = oldest_time + self.per_second - current_time
             if time_to_wait > 0:
+                print(f'Waiting for {time_to_wait:.2f} seconds at limiter')
                 await asyncio.sleep(time_to_wait)
         return self
 
@@ -23,3 +23,7 @@ class AdaptiveRateLimiter:
         current_time = time.time()
         await self.times.put(current_time)
         self.semaphore.release()
+
+    def reset(self):
+        self.times = asyncio.Queue(maxsize=self.calls)
+        self.semaphore = asyncio.Semaphore(self.calls)

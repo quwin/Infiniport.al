@@ -150,15 +150,13 @@ async def batch_speck_update():
   async with aiosqlite.connect(
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await speck_data(conn, session)
-    await conn.commit()
 
 
-@tasks.loop(minutes=120)
+@tasks.loop(minutes=60)
 async def batch_nft_land_update():
   async with aiosqlite.connect(
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await nft_land_data(conn, session)
-    await conn.commit()
 
 #Not implemented
 @tasks.loop(minutes=60)

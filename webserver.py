@@ -21,7 +21,7 @@ async def get_access_token(auth_code):
         "redirect_uri": REDIRECT_URI,
     }
     async with collab_limiter, aiohttp.ClientSession() as session, session.post(token_url, data=data) as response:
-            return await response.json()
+        return await response.json()
         
 # Request linked wallet(s) from Collab.land API
 async def get_user_wallets(access_token, limit=None, pagination_token=None):
@@ -74,7 +74,6 @@ def oauth2_callback():
                     
         formatted_addresses = " ".join(addresses)
         formatted_player_ids = " ".join(player_ids)
-        print(f"User {user_id} has {formatted_addresses} linked to {formatted_player_ids}")
         
         if addresses and player_ids:
             loop.run_until_complete(add_collab_wallets(
@@ -96,7 +95,6 @@ def success():
         <html>
         <body>
             <h1>Authorization successful!</h1>
-            <p>This tab will close automatically.</p>
             <script type="text/javascript">
                 window.onload = function() {
                     window.open('', '_self', ''); 

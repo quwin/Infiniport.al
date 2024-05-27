@@ -88,7 +88,7 @@ def embed_job(author,
                     details,
                     time_limit,
                     claimer=None):
-  pixelshine = '<a:PIXELshine1241404259774496878>'
+  pixelshine = '<a:PIXELshine:1241404259774496878>'
   coin = '<:pixelcoin:1238636808951038092>'
   embed = discord.Embed(
       title=

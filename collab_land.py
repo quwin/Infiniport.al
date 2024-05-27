@@ -77,11 +77,9 @@ async def show_linked_accounts(existing_wallets, user_id):
         for wallet in existing_wallets:
             # Formats the string into an array + removes duplicate account IDs
             formatted = list(set(wallet[2].split(" ")))
-            print(f"List: {formatted} \n")
             usernames = await get_accounts_usernames(userlimiter, formatted)
             for mid in formatted:
-                print(f"Mid: {mid} \n")
-                accounts += f"-{usernames.get(mid)} \n"
+                accounts += f"- {usernames.get(mid)} \n"
 
             
         embed.add_field(name="", value=accounts, inline=False)
