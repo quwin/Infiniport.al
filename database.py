@@ -156,11 +156,14 @@ async def add_collab_wallets(user_id, wallets, pixels_ids):
         print(f"Inserted {wallets} linked to {pixels_ids} into database for {user_id}!")
 
 async def batch_update_players(cursor, total_data_batch, skill_data_batch):
+    if 'total' in skill_data_batch:
+        del skill_data_batch['total']
+        print(f"Removed total")
     await cursor.executemany(
         '''INSERT OR REPLACE INTO total (user_id, username, level, exp)
       VALUES (?, ?, ?, ?)''', total_data_batch)
     total_data_batch.clear()
-
+    
     for skill, batch in skill_data_batch.items():
         await cursor.executemany(
             f'''INSERT OR REPLACE INTO {skill}

@@ -4,7 +4,7 @@ from discord import app_commands
 from profile_utils import lookup_profile, embed_profile
 from database import init_db, init_guild_db
 from leaderboard import manage_leaderboard
-from constants import TOKEN, NFT_LINK, SkillEnum, SortEnum
+from constants import TOKEN, SkillEnum, SortEnum
 from guild import guild_data, guild_update
 from land import speck_data, nft_land_data
 from modal import JobInput
@@ -16,7 +16,6 @@ import aiohttp
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
-bot = commands.Bot(intents=intents, command_prefix='!')
 client = discord.Client(intents=intents, command_prefix='!')
 tree = app_commands.CommandTree(client)
 
@@ -41,7 +40,7 @@ async def init_job_views(client: discord.Client):
   for job_id in jobs:
     client.add_view(JobView(job_id[0]))
 
-@tree.command(name="clear_commands", description="ofc",
+@tree.command(name="clear_commands", description="",
               guild=discord.Object(id=1234015429874417706))
 async def clear_commands(interaction, server: str | None = None):
   if interaction.user.id != 239235420104163328:
@@ -53,7 +52,7 @@ async def clear_commands(interaction, server: str | None = None):
     await tree.sync(guild=discord.Object(id=server))
   await interaction.response.send_message('Command tree removed!', ephemeral=True)
 
-@tree.command(name="add_commands", description="ofc",
+@tree.command(name="add_commands", description="",
              guild=discord.Object(id=1234015429874417706))
 async def add_commands(interaction, server: str | None = None):
   if interaction.user.id != 239235420104163328:
@@ -116,8 +115,6 @@ async def leaderboard(interaction: discord.Interaction,
   await manage_leaderboard(interaction, skill_value, sort_value, page_number, server_id)
 
 
-@tree.command(name="assignguild",
-  description="Look at your guild's Leaderboard!")
 async def assignguild(interaction, guild_name: str):
   async with aiosqlite.connect(
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
@@ -151,12 +148,6 @@ async def taskboard(interaction: discord.Interaction):
   await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
-@tree.command(name="chibi",
-              description="Show off your Chibi!")
-async def chibi(interaction, nft_id: str):
-  await interaction.response.send_message(f"{NFT_LINK}{nft_id}.gif")
-
-
 @tasks.loop(minutes=2880)
 async def batch_speck_update():
   async with aiosqlite.connect(
@@ -170,7 +161,6 @@ async def batch_nft_land_update():
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await nft_land_data(conn, session)
 
-#Not implemented
 @tasks.loop(minutes=60)
 async def update_voice_channel_name():
   guild_id = 880961748092477453
