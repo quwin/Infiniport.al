@@ -55,6 +55,13 @@ class JobView(discord.ui.View):
         await self.bump_message(interaction, current_time)
 
     async def edit_button_callback(self, interaction: discord.Interaction):
+        
+        current_time = time.time()
+        wait_time = current_time - self.last_bumped
+        if wait_time < 300:
+            await interaction.response.send_message(f"You can edit this task again <t:{int(current_time+300-wait_time)}:R>", ephemeral=True)
+            return
+            
         job_data = await fetch_job(self.job_id)
         if job_data and job_data[1] == interaction.user.id:
             await interaction.response.send_modal(JobInput(self, job_data))
