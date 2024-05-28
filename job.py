@@ -3,25 +3,39 @@ import discord
 import time
 from constants import SKILLS
 from database import fetch_job, delete_job, update_job_claimer, add_job, fetch_unclaimed_jobs
+from modal import JobInput, embed_job
 
 class JobView(discord.ui.View):
     def __init__(self, job_id):
         super().__init__(timeout=None)
         self.job_id = job_id
+        self.last_bumped = time.time()
 
         # Each button needs to create in __init__() because of how the custom_id 
         # is required to be in the same scope as job_id
         self.claim_button = discord.ui.Button(label="Claim", style=discord.ButtonStyle.green, custom_id=f'claim_{job_id}')
         self.unclaim_button = discord.ui.Button(label="Unclaim", style=discord.ButtonStyle.red, custom_id=f'unclaim_{job_id}')
-        self.close_job_button = discord.ui.Button(label="Close Task", style=discord.ButtonStyle.blurple, custom_id=f'close_job_{job_id}')
+        self.close_job_button = discord.ui.Button(label="Close", style=discord.ButtonStyle.blurple, custom_id=f'close_job_{job_id}')
+        self.bump_button = discord.ui.Button(label="Bump Task", 
+                                            style=discord.ButtonStyle.gray, 
+                                            custom_id=f'bump_{job_id}',
+                                            row=1)
+        self.edit_button = discord.ui.Button(label="Edit Task", 
+                                            style=discord.ButtonStyle.gray, 
+                                            custom_id=f'edit_{job_id}',
+                                            row=1)
 
         self.claim_button.callback = self.claim_button_callback
         self.unclaim_button.callback = self.unclaim_button_callback
         self.close_job_button.callback = self.close_job_button_callback
+        self.bump_button.callback = self.bump_button_callback
+        self.edit_button.callback = self.edit_button_callback
 
         self.add_item(self.claim_button)
         self.add_item(self.unclaim_button)
         self.add_item(self.close_job_button)
+        self.add_item(self.bump_button)
+        self.add_item(self.edit_button)
 
     async def claim_button_callback(self, interaction: discord.Interaction):
         await self.handle_interaction(interaction, "claim_")
@@ -32,14 +46,32 @@ class JobView(discord.ui.View):
     async def close_job_button_callback(self, interaction: discord.Interaction):
         await self.handle_interaction(interaction, "close_job_")
 
+    async def bump_button_callback(self, interaction: discord.Interaction):
+        current_time = time.time()
+        wait_time = current_time - self.last_bumped
+        if wait_time < 300:
+            await interaction.response.send_message(f"You can bump this task again <t:{int(current_time+300-wait_time)}:R>", ephemeral=True)
+            return
+        await self.bump_message(interaction, current_time)
+
+    async def edit_button_callback(self, interaction: discord.Interaction):
+        job_data = await fetch_job(self.job_id)
+        await interaction.response.send_modal(JobInput(self, job_data))
+        
     async def handle_interaction(self, interaction: discord.Interaction, custom_id: str):
-        await update_job(interaction, self, self.job_id, custom_id)
-    
-    
+        await interact_job(interaction, self, self.job_id, custom_id)
+
+    async def bump_message(self, interaction: discord.Interaction, current_time):
+        self.last_bumped = current_time
+        original_message = interaction.message
+        if original_message:
+            embed = original_message.embeds[0] if original_message.embeds else None
+            await original_message.delete()
+            if embed:
+                await interaction.response.send_message(embed=embed, view=self)
 
 
-async def update_job(interaction: discord.Interaction, view, job_id: str, button: str):
-  # Retrieve job details from the database
+async def interact_job(interaction: discord.Interaction, view, job_id: str, button: str):
   job = await fetch_job(job_id)
   if job:
     job_id, author_id, item, quantity, reward, details, time_limit, claimer_id  = job
@@ -55,9 +87,8 @@ async def update_job(interaction: discord.Interaction, view, job_id: str, button
         if not claimer_id:
             claimer_id = interaction.user.id
             await update_job_claimer(job_id, claimer_id)
-        else:
-            await interaction.response.defer()
-            
+        await interaction.response.defer()
+        
     elif button == "unclaim_":
         if claimer_id == interaction.user.id or author.id == interaction.user.id:
             claimer_id = None
@@ -70,7 +101,7 @@ async def update_job(interaction: discord.Interaction, view, job_id: str, button
         await interaction.message.delete()
         return
       elif interaction.user.id == claimer_id:
-        await interaction.response.send_message(f"<@{author_id}>, {interaction.user.mention} has finished your task!")
+        await interaction.response.send_message(f"<@{author_id}>, {interaction.user.mention} has completed your task!")
         await delete_job(job_id)
         await interaction.message.delete()
         return
@@ -79,35 +110,6 @@ async def update_job(interaction: discord.Interaction, view, job_id: str, button
 
     embed = embed_job(author, item, quantity, reward, details, time_limit, claimer_id)
     await interaction.message.edit(embed=embed, view=view)
-      
-
-def embed_job(author,
-                    item,
-                    quantity,
-                    reward,
-                    details,
-                    time_limit,
-                    claimer=None):
-  pixelshine = '<a:PIXELshine:1241404259774496878>'
-  coin = '<:pixelcoin:1238636808951038092>'
-  embed = discord.Embed(
-      title=
-      f"{coin}\t**New Task Posted!**\t{coin}\n",
-      color=0x00ff00)
-  embed.set_author(name=f"Requested by {author.display_name}",
-                   icon_url=f"{author.display_avatar}")
-  embed.add_field(name="",
-                  value=f"**{quantity}** x {item}\n\n" +
-                  "**Additional Info:\n**" + f"{details}\n\n" +
-                  "**Reward:**\n" + f"{reward}\n",
-                  inline=False)
-  embed.add_field(name="Expiration Time:",
-                  value=f"<t:{int(time.time()+(float(time_limit)*3600.0))}:R>",
-                  inline=False)
-  if claimer:
-    embed.add_field(name="", value=f"Claimed by <@{claimer}> \n")
-  return embed
-
 
 async def create_job(interaction: discord.Interaction, item, quantity, reward, details, time_limit):
     job_id = str(interaction.id)
@@ -117,26 +119,28 @@ async def create_job(interaction: discord.Interaction, item, quantity, reward, d
     await interaction.response.send_message(embed=embed, view=JobView(job_id))
     return job_id
 
-async def show_unclaimed_jobs(interaction: discord.Interaction):
+async def show_unclaimed_jobs(interaction: discord.Interaction, page_number):
     embed = discord.Embed(title='**Taskboard:**', color=0x00ff00)
-    list = ""
-    for job in await fetch_unclaimed_jobs():
+    
+    list = "----------------------------------------------------\n"
+    for job in await fetch_unclaimed_jobs(page_number):
         job_id, author_id, item, quantity, reward, details, time_limit, _  = job
         member = None
         if interaction.guild is not None:    
             member = interaction.guild.get_member(author_id)
         author = await interaction.client.fetch_user(author_id) if member is None else member
-        list = list + '----------------------------------------------------\n'
-        list = list + f"**Requested by** <@{author.id}>\n"
+        list = list + f"**Requested by** <@{author.id}>\n\n"
         list = list + f"> **{quantity}** x {item} **---->** {reward}\n"
         if details != 'N/A':
             details = format_details_as_blockquote(details)
             list = list + f"> **Additional Info:** \n{details}\n"
         list = list + f"> Expiration Time: <t:{int(time.time()+(float(time_limit)*3600.0))}:R>\n"
+        list = list + '----------------------------------------------------\n'
+        embed.add_field(name='', value=list, inline=False)
+        list = ""
+        
+    embed.add_field(name='', value="\n Create your own task using `/task create`", inline=False)
 
-    list = list + '----------------------------------------------------\n'
-    list = list + "\n Create your own task using `/task create`"
-    embed.add_field(name='', value=list, inline=False)
     return embed
 
 # Helper function for /taskboard

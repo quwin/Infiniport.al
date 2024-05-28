@@ -128,8 +128,9 @@ async def add_job(job_id, author_id, item, quantity, reward, details, time_limit
         ''', (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id))
         await db.commit()
 
-async def fetch_unclaimed_jobs():
-    async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT * FROM jobs WHERE claimer_id IS NULL') as cursor:
+async def fetch_unclaimed_jobs(page_number: int = 1):
+    async with aiosqlite.connect('jobs.db') as db, db.execute(
+        f'SELECT * FROM jobs WHERE claimer_id IS NULL LIMIT 4 OFFSET {4 * (page_number - 1)}') as cursor:
         return await cursor.fetchall()
 
 async def fetch_linked_wallets(user_id):
@@ -158,7 +159,6 @@ async def add_collab_wallets(user_id, wallets, pixels_ids):
 async def batch_update_players(cursor, total_data_batch, skill_data_batch):
     if 'total' in skill_data_batch:
         del skill_data_batch['total']
-        print(f"Removed total")
     await cursor.executemany(
         '''INSERT OR REPLACE INTO total (user_id, username, level, exp)
       VALUES (?, ?, ?, ?)''', total_data_batch)

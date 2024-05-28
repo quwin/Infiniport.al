@@ -69,6 +69,7 @@ async def link_profile(interaction):
   
 @tree.command(name="lookup",
               description="Lookup a player's Pixels profile")
+@app_commands.describe(input="Enter a user's Username, UserID, or Wallet Address")
 async def lookup(interaction, input: str):
   async with aiosqlite.connect('leaderboard.db') as conn:
     c = await conn.cursor()
@@ -136,15 +137,17 @@ job_group = app_commands.Group(name="task", description="View, modify, and creat
 # Create the subjobs
 @job_group.command(name="create", description="Create a claimable task!")
 async def create(interaction: discord.Interaction):
-  await interaction.response.send_modal(JobInput(client))
+  view = JobView(interaction.id)
+  await interaction.response.send_modal(JobInput(view))
 
 tree.add_command(job_group)
 
 # Main /taskboard
 @tree.command(name="taskboard",
   description="View the tasks available to complete!")
-async def taskboard(interaction: discord.Interaction):
-  embed = await show_unclaimed_jobs(interaction)
+@app_commands.describe(page_number="Enter the page to go to")
+async def taskboard(interaction: discord.Interaction, page_number: int = 1):
+  embed = await show_unclaimed_jobs(interaction, page_number)
   await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
