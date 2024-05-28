@@ -56,7 +56,11 @@ class JobView(discord.ui.View):
 
     async def edit_button_callback(self, interaction: discord.Interaction):
         job_data = await fetch_job(self.job_id)
-        await interaction.response.send_modal(JobInput(self, job_data))
+        if job_data and job_data[1] == interaction.user.id:
+            await interaction.response.send_modal(JobInput(self, job_data))
+        else:
+            await interaction.response.defer()
+            return
         
     async def handle_interaction(self, interaction: discord.Interaction, custom_id: str):
         await interact_job(interaction, self, self.job_id, custom_id)
