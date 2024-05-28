@@ -6,8 +6,6 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
     def __init__(self, view, job_data = None):
         super().__init__()
         self.view = view
-        print(job_data)
-        print(view)
         if job_data is not None:
             self.job_data = {
                 'job_id': job_data[0],
@@ -16,7 +14,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
                 'quantity': job_data[3],
                 'reward': job_data[4],
                 'details': job_data[5],
-                'time_limit': min(999, int(job_data[6])),
+                'time_limit': int(job_data[6]),
                 'claimer_id': job_data[7],
             }
         else:
@@ -46,7 +44,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
             label='What additional information do you have?',
             style=discord.TextStyle.long,
             required=False,
-            default= self.job_data.get('quantity', 'N/A'),
+            default= self.job_data.get('details', 'N/A'),
             max_length=256,
         ))
 
@@ -54,7 +52,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
             label='When should this job expire? (In Hours)',
             style=discord.TextStyle.long,
             required=False,
-            default= self.job_data.get('quantity', '24'),
+            default= self.job_data.get('time_limit', '24'),
             max_length=3,
         ))
     
