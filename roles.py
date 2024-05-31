@@ -41,12 +41,22 @@ async def linkRole(interaction: discord.Interaction, role: discord.Role, require
             role_numbers = quantity
 
         # Insert or replace the data
-        await db.execute('''
-            INSERT OR REPLACE INTO discord_servers
-            (server_id, role_ids, role_requirements, role_numbers)
-            VALUES (?, ?, ?, ?)
-        ''', (guild_id, role_ids, role_requirements, role_numbers))
+        async with db.execute('SELECT 1 FROM discord_servers WHERE server_id = ?', (guild_id,)) as cursor:
+            exists = await cursor.fetchone()
 
+            if exists:
+                if role_ids:
+                    await db.execute('UPDATE discord_servers SET role_ids = ? WHERE server_id = ?', (role_ids, guild_id))
+                if role_requirements:
+                    await db.execute('UPDATE discord_servers SET role_requirements = ? WHERE server_id = ?', (role_requirements, guild_id))
+                if role_numbers:
+                    await db.execute('UPDATE discord_servers SET role_numbers = ? WHERE server_id = ?', (role_numbers, guild_id))
+            else:
+                # Insert a new entry
+                await db.execute('''
+                    INSERT INTO discord_servers (server_id, role_ids, role_requirements, role_numbers)
+                    VALUES (?, ?, ?, ?)
+                ''', (guild_id, role_ids, role_requirements, role_numbers))
         await db.commit()
         await interaction.followup.send(f"Successfully created or updated requirements for the role: {role.mention}", ephemeral=True)\
         
