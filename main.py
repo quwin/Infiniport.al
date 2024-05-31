@@ -18,6 +18,7 @@ intents.messages = True
 intents.members = True
 intents.message_content = True
 intents.presences = True
+intents.guilds = True
 client = discord.Client(intents=intents, command_prefix='!')
 tree = app_commands.CommandTree(client)
 

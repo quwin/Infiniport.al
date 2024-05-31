@@ -149,9 +149,9 @@ class linkedAccountsView(discord.ui.View):
             user = interaction.guild.get_member(interaction.user.id)
             if user is None:
                 user = await interaction.guild.fetch_member(interaction.user.id)
-            print(valid_roles, user, '\n')
             for role_id in valid_roles:
-                role = interaction.guild.get_role(role_id)
+                role = interaction.guild.get_role(int(role_id))
+                print(role)
                 if role:
                     try:
                         await user.add_roles(role)
