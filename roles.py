@@ -71,9 +71,9 @@ async def check_eligibility(interaction: discord.Interaction, primary_id):
             #player_data = await lookup_profile(c, primary_id)
             #await c.commit()
             
-        role_ids = role_data[0].split(' ')
-        role_requirements = role_data[1].split(' ')
-        role_numbers = role_data[2].split(' ')
+        role_ids = role_data[6].split(' ')
+        role_requirements = role_data[7].split(' ')
+        role_numbers = role_data[8].split(' ')
         for i in range(len(role_ids)):
             role_id = role_ids[i]
             format = role_requirements[i].split('+')
