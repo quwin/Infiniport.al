@@ -42,12 +42,25 @@ async def init_db():
         await discord.execute(
         '''CREATE TABLE IF NOT EXISTS discord_servers
         (server_id text PRIMARY KEY,
-        premium REAL, linked_guild text)'''
+        premium REAL,
+        linked_guild text,
+        global_tasks boolean,
+        account_linking boolean,
+        admin_role text,
+        role_ids text,
+        role_requirements text,
+        role_numbers text
+        )'''
         )
         await discord.execute(
             '''CREATE TABLE IF NOT EXISTS discord_users
             (user_id text PRIMARY KEY,
-            wallets text, pixels_ids text, access_token text, refresh_token text)'''
+            wallets text,
+            pixels_ids text,
+            primary_id text,
+            access_token text,
+            refresh_token text
+            )'''
         )
         await discord.commit()
         
@@ -86,17 +99,28 @@ async def database_remove(user_id):
           await conn.commit()
           print(f"purged {user_id} from database")
 
-async def init_guild_db(server_id, guild_id, conn):
-    c = await conn.cursor()
-    await c.execute(
-        f'''CREATE TABLE IF NOT EXISTS guild_{guild_id}
-        (user_id text PRIMARY KEY, username text, role text)'''
-    )
-    await c.execute(
-        '''INSERT OR REPLACE INTO discord_servers (server_id, linked_guild)
-        VALUES (?, ?)''',
-        (server_id, guild_id)
-    )
+async def init_guild_db(server_id, guild_data):
+    async with aiosqlite.connect('discord.db') as discord, aiosqlite.connect('leaderboard.db') as leaderboard: 
+        ds = await discord.cursor()
+        lb = await leaderboard.cursor()
+        id = guild_data['_id']
+        await lb.execute(
+            f'''CREATE TABLE IF NOT EXISTS guild_{id}
+            (user_id text PRIMARY KEY, username text, role text)'''
+        )
+        await lb.execute(
+            '''INSERT OR REPLACE INTO guilds
+            (id, handle, emblem, shard_price, land_count)
+            VALUES (?, ?, ?, ?, ?)''',
+            (id, guild_data['handle'], guild_data['emblem'], guild_data['membershipsCount'], guild_data['mapCount'],)
+        )
+        await ds.execute(
+            '''INSERT OR REPLACE INTO discord_servers (server_id, linked_guild)
+            VALUES (?, ?)''',
+            (server_id, id,)
+        )
+        await discord.commit()
+        await leaderboard.commit()
 
 async def update_job_claimer(job_id, claimer_id):
     async with aiosqlite.connect('jobs.db') as db:
@@ -135,7 +159,7 @@ async def fetch_unclaimed_jobs(page_number: int = 1):
 
 async def fetch_linked_wallets(user_id):
     async with aiosqlite.connect('discord.db') as db, db.execute('SELECT * FROM discord_users WHERE user_id = ?', (user_id,)) as cursor:
-        return await cursor.fetchall()
+        return await cursor.fetchone()
 
 async def add_collab_tokens(user_id, access_token, refresh_token):
     async with aiosqlite.connect('discord.db') as db:
@@ -170,3 +194,14 @@ async def batch_update_players(cursor, total_data_batch, skill_data_batch):
           (user_id, username, level, exp, current_exp)
           VALUES (?, ?, ?, ?, ?)''', batch)
         batch.clear()
+
+async def get_discord_roles(server_id):
+    async with aiosqlite.connect('discord.db') as db, db.execute('SELECT role_ids, role_requirements, role_numbers FROM discord_servers WHERE server_id = ?', (server_id,)) as cursor:
+        return await cursor.fetchone()
+
+async def get_guild_handle_from_server_id(server_id):
+    async with aiosqlite.connect('discord.db') as db, db.execute('SELECT linked_guild FROM discord_servers WHERE server_id = ?', (server_id,)) as cursor:
+        guild_id = await cursor.fetchone()
+        if guild_id:
+            async with aiosqlite.connect('leaderboard.db') as db, db.execute('SELECT handle FROM guilds WHERE id = ?', (guild_id[0],)) as cursor2:
+                return await cursor2.fetchone()

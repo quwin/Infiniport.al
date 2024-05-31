@@ -3,8 +3,10 @@ from database import fetch_linked_wallets
 from constants import COLLAB_ID, REDIRECT_URI
 from rate_limiter import AdaptiveRateLimiter
 from profile_utils import get_accounts_usernames
+from roles import check_eligibility
 
 userlimiter = AdaptiveRateLimiter(3, 1)
+users_checking = []
 
 class CollabButtons(discord.ui.View):
     def __init__(self):
@@ -42,15 +44,15 @@ class CollabButtons(discord.ui.View):
 async def manage_collab_link(interaction):
     user_id = str(interaction.user.id)
     existing_wallets = await fetch_linked_wallets(user_id)
-    (embed, view) = await show_linked_accounts(existing_wallets, user_id)
-    await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+    embed = await show_linked_accounts(existing_wallets)
+    await interaction.followup.send(embed=embed, view=linkedAccountsView(user_id, existing_wallets), ephemeral=True)
 
 # Embed for showing how to link your Pixels Account to the Bot
 def collab_embed():
     embed = discord.Embed(
           title="Link your Pixels.xyz account",
           color=0x00ff00)
-    embed.set_author(name="Cookie Monster")
+    embed.set_author(name="Infiniportal")
     embed.add_field(name="",
                   value="This is a read-only connection. Do not share your private keys. " +
                   "We will never ask for your seed phrase. We will never DM you.\n" + 
@@ -58,28 +60,25 @@ def collab_embed():
                   inline=False)
     return embed
 
-#Function to create and manage collab_embed()
-async def collab_channel(client):
-    channel_id = 1234015430381932577
-    channel = client.get_channel(channel_id)
+# Create and manage collab_embed()
+async def collab_channel(channel):
+    await channel.send(embed=collab_embed(), view=CollabButtons())
 
-    if channel:
-        await channel.send(embed=collab_embed(), view=CollabButtons())
-
+        
 # Function to show the linked accounts, and allow people to link their accounts
-async def show_linked_accounts(existing_wallets, user_id):
+async def show_linked_accounts(existing_wallets):
     if existing_wallets:
         embed = discord.Embed(
               title="My Connected Pixels.xyz Accounts",
               description="Data powered by Collab.Land\n \n",
               color=0x00ff00)
         accounts = ''
-        for wallet in existing_wallets:
-            # Formats the string into an array + removes duplicate account IDs
-            formatted = list(set(wallet[2].split(" ")))
-            usernames = await get_accounts_usernames(userlimiter, formatted)
-            for mid in formatted:
-                accounts += f"- {usernames.get(mid)} \n"
+        # Formats the string into an array + removes duplicate account IDs
+        formatted = list(set(existing_wallets[2].split(" ")))
+        usernames = await get_accounts_usernames(userlimiter, formatted)
+        for mid in formatted:
+            accounts += f"- {usernames.get(mid)} \n"
+ 
 
             
         embed.add_field(name="", value=accounts, inline=False)
@@ -91,27 +90,81 @@ async def show_linked_accounts(existing_wallets, user_id):
         accounts = 'You have no accounts linked! Please link one by clicking the button below.'
         embed.add_field(name="", value=accounts, inline=False)
 
-    view = discord.ui.View()
-    auth_url = (
-        f"https://api.collab.land/oauth2/authorize"
-        "?response_type=code"
-        f"&client_id={COLLAB_ID}"
-        f"&redirect_uri={REDIRECT_URI}"
-        f"&scope=user:wallet:read"
-        f"&state={user_id}"
-    )
-    cont_button = discord.ui.Button(
-        label="Use Connected Accounts",
-        style=discord.ButtonStyle.blurple,
+    return embed
+
+class linkedAccountsView(discord.ui.View):
+    def __init__(self, user_id, existing_wallets):
+        super().__init__(timeout=900.0)
+        self.user_id = user_id
+        if not existing_wallets:
+            self.pixels_ids = []
+            self.primary_id = None
+        else:
+            self.pixels_ids = list(set(existing_wallets[2].split(" "))) if existing_wallets[2] else []
+            self.primary_id = existing_wallets[3] if existing_wallets[3] else None
+        #users_checking.append(user_id)
+        auth_url = (
+            f"https://api.collab.land/oauth2/authorize"
+            "?response_type=code"
+            f"&client_id={COLLAB_ID}"
+            f"&redirect_uri={REDIRECT_URI}"
+            f"&scope=user:wallet:read"
+            f"&state={user_id}"
+        )
+
+        if self.pixels_ids:
+            options=[]
+            for id in self.pixels_ids:
+                options.append(discord.SelectOption(label=f"{id}"))
+                
+            self.select_menu = discord.ui.Select(
+                placeholder="Select your primary Pixels account:",
+                min_values=1,
+                max_values=1,
+                options=options,
+            )
         
-    )
-    link_button = discord.ui.Button(
-        label="Add a new Account",
-        style=discord.ButtonStyle.grey,
-        url=auth_url
-    )
+            self.select_menu.callback = self.select_callback
+            self.add_item(self.select_menu)
+        
+        self.get_roles = discord.ui.Button(label="Check Roles", 
+            style=discord.ButtonStyle.blurple)
 
-    view.add_item(item=cont_button)
-    view.add_item(item=link_button)
+        self.add_acc = discord.ui.Button(label="Add a new Account", 
+            style=discord.ButtonStyle.blurple,
+            url = auth_url)
+        
+        self.get_roles.callback = self.get_roles_callback
+        self.add_item(self.get_roles)
+        self.add_item(self.add_acc)
 
-    return embed, view
+
+    async def get_roles_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if self.pixels_ids and self.primary_id and interaction.guild:
+            valid_roles = await check_eligibility(interaction, self.primary_id)
+            user: discord.Member | None = interaction.guild.get_member(interaction.user.id)
+            for role_id in valid_roles:
+                role = interaction.guild.get_role(role_id)
+                if role and user:
+                    try:
+                        await user.add_roles(role)
+                        await interaction.followup.send(f"Role '{role.name}' added to user '{user.display_name}'.", ephemeral=True)
+                    except discord.Forbidden:
+                        await interaction.followup.send("Role setting failed, improper permissions granted", ephemeral=True)
+                    except discord.HTTPException as e:
+                        await interaction.followup.send(f"Failed to add role: {e}", ephemeral=True)
+                return
+        else:
+            await interaction.followup.send("Please link a Pixels Account and select a primary account!", ephemeral=True)
+
+    async def select_callback(self, interaction: discord.Interaction):
+        self.primary_id = self.select_menu.values[0]
+        await interaction.response.defer()
+
+    async def on_timeout(self):
+        try:
+            users_checking.remove(self.user_id)
+            self.stop()
+        except Exception as e:
+            print(f"Failed to stop View on timeout: {str(e)}")

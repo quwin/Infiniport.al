@@ -47,6 +47,7 @@ async def speck_data(conn, session):
             print(f'{i} Specks scanned.')
             await batch_update_players(cursor, total_data_batch, skill_data_batch)
             await conn.commit()
+            limiter.reset()
 
         async with limiter, session.get(SPECK_OWNER_LINK + str(FIRST_SPECK + i)) as response:
             if response.status != 200:

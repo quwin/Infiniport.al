@@ -1,6 +1,9 @@
 import discord
 import time
 from database import add_job
+from guild import assignguild
+from roles import linkRole
+from constants import RequirementType
 
 class JobInput(discord.ui.Modal, title='Input Task Details:'):
     def __init__(self, view, job_data = None):
@@ -71,9 +74,8 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         claimer_id = self.job_data.get("claimer_id", None)
 
         await create_or_edit_job(interaction, item, quantity, reward, details, time_limit, self.view, interaction_id, claimer_id)
-
-        await add_job(interaction_id, interaction.user.id, item, quantity, reward, details, time_limit, claimer_id)
-            
+        await add_job(interaction_id, author_id, item, quantity, reward, details, time_limit, claimer_id)
+        
         async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
             print(f"Error: {error}")
             await interaction.response.send_message(f"Failed to update the job: {str(error)}", ephemeral=True)
@@ -116,3 +118,66 @@ def embed_job(author,
     if claimer:
         embed.add_field(name="", value=f"Claimed by <@{claimer}> \n")
     return embed
+
+class guildAssign(discord.ui.Modal, title='Input Guild Handle:'):
+    def __init__(self):
+        super().__init__()
+        self.add_item(discord.ui.TextInput(
+            label='Guild Handle',
+            placeholder='cookiemonsters',
+            max_length=256,
+        ))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        await assignguild(interaction, self.children[0].value)
+        
+        async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+            print(f"Error: {error}")
+            await interaction.response.send_message(f"Failed to assign a guild: {str(error)}", ephemeral=True)
+            return
+
+class roleAssign(discord.ui.Modal, title='Input Role Information:'):
+    def __init__(self, role: discord.Role, rule):
+        super().__init__()
+        self.role = role
+        label, required = match_rule(rule)
+        self.required = rule + '+' + required.value
+        self.add_item(discord.ui.TextInput(
+            label=f'{label}',
+            placeholder='1',
+            max_length=16,
+            default='1',
+        ))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        await linkRole(interaction, self.role, self.required, self.children[0].value)
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        print(f"Error: {error}")
+        await interaction.followup.send(f"Failed to create the role: {str(self.role)}", ephemeral=True)
+        return
+
+def match_rule(rule):
+    match str(rule):
+        case "Guild_Admin":
+            return ("Pledged Shards required", RequirementType.PLEDGE)
+        case "Guild_Worker":
+            return ("Pledged Shards required", RequirementType.PLEDGE)
+        case "Guild_Member":
+            return ("Pledged Shards required", RequirementType.PLEDGE)
+        case "Shard_Pledger":
+            return ("Pledged Shards required", RequirementType.PLEDGE)
+        case "Shard_Supporter":
+            return ("Shards owned", RequirementType.OWN)
+        case "Land_Pledger":
+            return ("Pledged Lands required", RequirementType.PLEDGE_LAND)
+        case "Land_Owner":
+            return ("Lands owned", RequirementType.OWN_LAND)
+        case "Player_Level":    
+            return ("Level Required", RequirementType.LEVEL)
+        case "Skill_Level":
+            return ("Level Required", RequirementType.LEVEL)
+        case _:
+            return ("Shards owned", RequirementType.OWN)

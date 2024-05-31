@@ -2,51 +2,76 @@ from constants import GUILD_LINK, GUILD_EMBLEM, GUILD_HOME, SKILLS
 from profile_utils import lookup_profile
 import aiohttp
 import aiosqlite
+from rate_limiter import AdaptiveRateLimiter
+from land import prep_player_info
+from database import init_guild_db
+import discord
+
+async def assignguild(interaction: discord.Interaction, guild_name: str):
+  if interaction.guild is None:
+    await interaction.followup.send(content=f"This command is for servers only!", ephemeral=True)
+    return
+  async with aiohttp.ClientSession() as session:
+    data = await guild_data(session, guild_name)
+    guild_info = data.get('guild', None)
+    if guild_info is None:
+      await interaction.followup.send(content=f"Could not find a guild with the handle @{guild_name}!", ephemeral=True)
+      return
+    guild_id = guild_info.get('_id', None)
+    if guild_id is None:
+      await interaction.followup.send(content=f"Could not find a guild ID with the handle @{guild_name}!", ephemeral=True)
+      return
+    await init_guild_db(interaction.guild.id, guild_info)
+    await guild_update(data)
+    await interaction.followup.send(f"Successfully assigned Pixels Guild {guild_name}!", ephemeral=True)
 
 async def guild_data(session, guild_name):
     async with session.get(GUILD_LINK + guild_name) as response:
         return await response.json()
 
-async def guild_update(cursor, guild_data):
-    guild_data_batch = []
-    guild_info = guild_data.get('guild', None)
-    if guild_info is None:
-      return None
-    guild_id = guild_info.get('_id', None)
-    if guild_id is None:
-      return None
-    members = guild_data.get('guildMembers', None)
-    if members is None:
-        print(f"Unable to update guild members for {guild_id}")
-        return None
-    for member in members:
-        if member['role'] == 'Watcher':
-            break
-        else:
-            guild_data_batch.append((member['player']['_id'],
-                                     member['player']['username'], 
-                                     member['role']))
-            
-    # Fetch current members in the database
-    await cursor.execute(f"SELECT user_id FROM guild_{guild_id}")
-    current_members = await cursor.fetchall()
+async def guild_update(guild_data):
+    async with aiosqlite.connect('leaderboard.db') as conn:
+        c = await conn.cursor()
+        guild_data_batch = []
+        guild_info = guild_data.get('guild', None)
+        if guild_info is None:
+          return None
+        guild_id = guild_info.get('_id', None)
+        if guild_id is None:
+          return None
+        members = guild_data.get('guildMembers', None)
+        if members is None:
+            print(f"Unable to update guild members for {guild_id}")
+            return None
+        for member in members:
+            if member['role'] == 'Watcher' or member['role'] == 'Supporter':
+                break
+            else:
+                guild_data_batch.append((member['player']['_id'],
+                                         member['player']['username'], 
+                                         member['role']))
+                
+        # Fetch current members in the database
+        result = await c.execute(f"SELECT user_id FROM guild_{guild_id}")
+        current_members = await result.fetchall()
+        
+        current_member_ids = {row[0] for row in current_members}
+        new_member_ids = {member[0] for member in guild_data_batch}
+        members_to_remove = current_member_ids - new_member_ids
     
-    current_member_ids = {row[0] for row in current_members}
-    new_member_ids = {member[0] for member in guild_data_batch}
-    members_to_remove = current_member_ids - new_member_ids
+        # Remove members who have left the guild from the database
+        if members_to_remove:
+            await c.executemany(
+                f"DELETE FROM guild_{guild_id} WHERE user_id = ?",
+                [(member_id,) for member_id in members_to_remove]
+            )
+        
+        await c.executemany(
+            f'''INSERT OR REPLACE INTO guild_{guild_id} (user_id, username, role)
+            VALUES (?, ?, ?)''', guild_data_batch)
 
-    # Remove members who have left the guild from the database
-    if members_to_remove:
-        await cursor.executemany(
-            f"DELETE FROM guild_{guild_id} WHERE user_id = ?",
-            [(member_id,) for member_id in members_to_remove]
-        )
-    
-    await cursor.executemany(
-        f'''INSERT OR REPLACE INTO guild_{guild_id} (user_id, username, role)
-        VALUES (?, ?, ?)''', guild_data_batch)
-
-    return new_member_ids
+        await conn.commit()
+        return new_member_ids
 
 async def all_guilds_data(conn, session):
     i = 1

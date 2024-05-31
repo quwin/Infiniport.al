@@ -100,7 +100,7 @@ def success():
                     window.open('', '_self', ''); 
                     window.close(); 
                     setTimeout(function() { 
-                        alert("Please close this tab."); 
+                        alert("Please return to Discord and refresh your accounts"); 
                     }, 1000);
                 }
             </script>

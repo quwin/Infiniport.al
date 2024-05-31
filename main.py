@@ -2,16 +2,16 @@ import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 from profile_utils import lookup_profile, embed_profile
-from database import init_db, init_guild_db
+from database import init_db
 from leaderboard import manage_leaderboard
 from constants import TOKEN, SkillEnum, SortEnum
-from guild import guild_data, guild_update
 from land import speck_data, nft_land_data
 from modal import JobInput
 from job import JobView, show_unclaimed_jobs
 from collab_land import collab_channel, CollabButtons
 import aiosqlite
 import aiohttp
+from initalize_server import config_channel, firstMessageView
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -27,11 +27,27 @@ async def on_ready():
   await init_db()
   await init_job_views(client)
   client.add_view(CollabButtons())
-  await collab_channel(client)
+  client.add_view(firstMessageView())
   batch_speck_update.start()
   batch_nft_land_update.start()
   # update_voice_channel_name.start()
   # batch_guild_update.start()
+
+@client.event
+async def on_guild_join(guild: discord.Guild):
+  # Doesn't work if they can be None
+  if guild.default_role and guild.me:
+    
+    overwrites = {
+      guild.default_role: discord.PermissionOverwrite(view_channel=False),
+      guild.me: discord.PermissionOverwrite(view_channel=True),
+    }
+    settings = await guild.create_text_channel('infiniportal-config', overwrites=overwrites)
+    connect = await guild.create_text_channel('infiniportal-connect', overwrites=overwrites)
+
+    await config_channel(settings)
+    await collab_channel(connect)
+
 
 async def init_job_views(client: discord.Client):
   async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT job_id FROM jobs') as cursor:
@@ -63,9 +79,14 @@ async def add_commands(interaction, server: str | None = None):
     await tree.sync(guild=discord.Object(id=int(server)))
   await interaction.response.send_message('Command tree synced!', ephemeral=True)
 
-async def link_profile(interaction):
-  user_id = interaction.user.id
-  
+@tree.command(name="raw_sql", description="break da database",
+   guild=discord.Object(id=1234015429874417706))
+async def raw_sql(interaction, execute: str):
+  await interaction.response.defer()
+  async with aiosqlite.connect('discord.db') as db:
+    await db.execute(execute)
+    await db.commit()
+  await interaction.followup.send(f'Executed command {execute}!')
   
 @tree.command(name="lookup",
               description="Lookup a player's Pixels profile")
@@ -114,22 +135,6 @@ async def leaderboard(interaction: discord.Interaction,
   sort_value = sort.value
   server_id = interaction.guild.id
   await manage_leaderboard(interaction, skill_value, sort_value, page_number, server_id)
-
-
-async def assignguild(interaction, guild_name: str):
-  async with aiosqlite.connect(
-      'leaderboard.db') as conn, aiohttp.ClientSession() as session:
-    data = await guild_data(session, guild_name)
-    guild_info = data.get('guild', None)
-    if guild_info is None:
-      await interaction.response.send_message(content=f"I could not find a guild with the handle @{guild_name}!", ephemeral=True)
-      return
-    guild_id = guild_info.get('id', None)
-    if guild_id is None:
-      return
-    await init_guild_db(interaction.guild.id, guild_id, conn)
-    await guild_update(conn, data)
-    await conn.commit()
 
 # Define the group
 job_group = app_commands.Group(name="task", description="View, modify, and create tasks for other users to complete!")

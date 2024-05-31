@@ -81,23 +81,37 @@ async def leaderboard_func(table_name, order, page_number, server_id=None):
 
         # Construct the basic or guild-specific SQL query based on the presence of server_id
         if server_id:
-            # Retrieve linked guild information based on server_id
-            await c.execute(
-                "SELECT linked_guild FROM discord_servers WHERE server_id = ?;",
-                (server_id, ))
-            guild_row = await c.fetchone()
-            if guild_row:
-                guild_name = guild_row[0]
-                query = f"""
-                SELECT u.username, u.{order}
-                FROM {table_name} u
-                JOIN guild_{guild_name} gm ON gm.user_id = u.user_id
-                JOIN discord_servers ds
-                WHERE ds.server_id = ?
-                ORDER BY u.{order2} DESC
-                LIMIT 10 OFFSET {10 * (page_number - 1)};
-                """
-                parameters = (server_id, )
+            # Connect to discord.db to fetch linked_guild
+            async with aiosqlite.connect('discord.db') as discord_conn:
+                discord_cursor = await discord_conn.cursor()
+                await discord_cursor.execute(
+                    "SELECT linked_guild FROM discord_servers WHERE server_id = ?;",
+                    (server_id, )
+                )
+                guild_row = await discord_cursor.fetchone()
+                # If linked_guild exists, use it to construct the second query
+                if guild_row:
+                    guild_id = guild_row[0]
+                    await c.execute(
+                        "SELECT * FROM guilds WHERE id = ?;",
+                        (guild_id, )
+                    )
+                    guild_data = await c.fetchone()
+
+                    query = f"""
+                    SELECT u.username, u.{order}
+                    FROM {table_name} u
+                    JOIN guild_{guild_id} gm ON gm.user_id = u.user_id
+                    ORDER BY u.{order2} DESC
+                    LIMIT 10 OFFSET {10 * (page_number - 1)};
+                    """
+                    parameters = ()
+
+                    if guild_data:
+                        guild_name = guild_data[1]
+                        guild_icon = guild_data[2]
+                        
+
         else:
             query = f"""
             SELECT username, {order}
@@ -111,13 +125,16 @@ async def leaderboard_func(table_name, order, page_number, server_id=None):
         await c.execute(query, parameters)
 
         # Create the embed for Discord
-        title_prefix = f"{guild_name.title() + ' ' if server_id else ''}"
+        title_prefix = f"{guild_name.title() + ' ' if (server_id and guild_name) else ''}"
         embed = discord.Embed(
             title=
             f"{title_prefix}{table_name.title()} {order.title()} Leaderboard",
             description="",
             color=0x00ff00)
         embed.set_footer(text=f"Page {page_number}")
+
+        if guild_icon:
+            embed.set_thumbnail(url="https:"+guild_icon + '?0.5060365238289637')
 
         if table_name != 'total':
             embed.set_thumbnail(url=ICON + table_name.lower() + ICON_END)

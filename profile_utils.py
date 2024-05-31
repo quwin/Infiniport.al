@@ -54,7 +54,7 @@ def embed_profile(data, total_levels, total_skills):
 
   # Thumbnail image data
   image_url = data.get('currentAvatar', {}).get('pieces', {}).get('image', None)
-  print(image_url)
+
   if image_url:
     embed.set_thumbnail(url=image_url)
 
