@@ -2,7 +2,6 @@ from flask import Flask, request, redirect, url_for, render_template_string
 from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY
 from database import add_collab_tokens, add_collab_wallets
 from profile_utils import profile_finder
-from rate_limiter import AdaptiveRateLimiter
 import aiohttp
 import asyncio
 

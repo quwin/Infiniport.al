@@ -9,7 +9,7 @@ class JobView(discord.ui.View):
     def __init__(self, job_id):
         super().__init__(timeout=None)
         self.job_id = job_id
-        self.last_bumped = time.time()
+        self.last_bumped = time.time() - 300
 
         # Each button needs to create in __init__() because of how the custom_id 
         # is required to be in the same scope as job_id
@@ -52,10 +52,10 @@ class JobView(discord.ui.View):
         if wait_time < 300:
             await interaction.response.send_message(f"You can bump this task again <t:{int(current_time+300-wait_time)}:R>", ephemeral=True)
             return
-        await self.bump_message(interaction, current_time)
+        self.last_bumped = current_time
+        await self.bump_message(interaction)
 
     async def edit_button_callback(self, interaction: discord.Interaction):
-        
         current_time = time.time()
         wait_time = current_time - self.last_bumped
         if wait_time < 300:
@@ -72,8 +72,7 @@ class JobView(discord.ui.View):
     async def handle_interaction(self, interaction: discord.Interaction, custom_id: str):
         await interact_job(interaction, self, self.job_id, custom_id)
 
-    async def bump_message(self, interaction: discord.Interaction, current_time):
-        self.last_bumped = current_time
+    async def bump_message(self, interaction: discord.Interaction):
         original_message = interaction.message
         if original_message:
             embed = original_message.embeds[0] if original_message.embeds else None
