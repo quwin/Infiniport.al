@@ -55,13 +55,12 @@ async def manage_leaderboard(interaction,
                              page_number=1,
                              server_id=None):
     page_number = max(1, page_number)
-    embed = await leaderboard_func(table_name, arg, page_number,
-                                   server_id)
-    view = LeaderboardView(interaction, table_name, arg, page_number,
-                           server_id)
-    await interaction.response.send_message(embed=embed,
-                                            view=view,
-                                            ephemeral=False)
+    embed = await leaderboard_func(table_name, arg, page_number, server_id)
+    if embed:
+        view = LeaderboardView(interaction, table_name, arg, page_number, server_id)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=False)
+    else:
+        await interaction.response.send_message("Error, try again!", ephemeral=True)
 
 
 async def leaderboard_func(table_name, order, page_number, server_id=None):
@@ -78,7 +77,10 @@ async def leaderboard_func(table_name, order, page_number, server_id=None):
         if table_name == 'total' and order == 'level':
             order2 = 'level'
         table_name = table_name if table_name in valid_tables else 'total'
-
+        guild_name = None
+        guild_icon = None
+        query = None
+        parameters = None
         # Construct the basic or guild-specific SQL query based on the presence of server_id
         if server_id:
             # Connect to discord.db to fetch linked_guild
@@ -122,8 +124,9 @@ async def leaderboard_func(table_name, order, page_number, server_id=None):
             parameters = ()
 
         # Execute query
+        if query is None or parameters is None:
+            return None
         await c.execute(query, parameters)
-
         # Create the embed for Discord
         title_prefix = f"{guild_name.title() + ' ' if (server_id and guild_name) else ''}"
         embed = discord.Embed(

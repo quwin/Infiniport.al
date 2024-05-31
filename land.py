@@ -3,13 +3,14 @@ from constants import SKILLS, SPECK_OWNER_LINK, BATCH_SIZE, GIVE_UP, FIRST_SPECK
 from rate_limiter import AdaptiveRateLimiter
 from database import batch_update_players
 
-limiter = AdaptiveRateLimiter(SPECK_RATE, 1)
 
 async def nft_land_data(conn, session):
     i = 1
     total_data_batch = []
     skill_data_batch = {skill: [] for skill in SKILLS}
     cursor = await conn.cursor()
+    limiter = AdaptiveRateLimiter(SPECK_RATE/2, 1)
+
     
     while i <= 5000:
         async with limiter, session.get(NFT_LAND_LINK + str(i)) as response:
@@ -41,6 +42,8 @@ async def speck_data(conn, session):
     total_data_batch = []
     skill_data_batch = {skill: [] for skill in SKILLS}
     cursor = await conn.cursor()
+    limiter = AdaptiveRateLimiter(SPECK_RATE/2, 1)
+
 
     while True:
         if i % BATCH_SIZE == 0:
