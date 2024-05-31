@@ -15,7 +15,9 @@ from initalize_server import config_channel, firstMessageView
 
 intents = discord.Intents.default()
 intents.messages = True
+intents.members = True
 intents.message_content = True
+intents.presences = True
 client = discord.Client(intents=intents, command_prefix='!')
 tree = app_commands.CommandTree(client)
 

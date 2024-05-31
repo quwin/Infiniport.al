@@ -145,11 +145,13 @@ class linkedAccountsView(discord.ui.View):
         await interaction.response.defer(thinking=True)
         if self.pixels_ids and self.primary_id and interaction.guild:
             valid_roles = await check_eligibility(interaction, self.primary_id)
-            user: discord.Member | None = interaction.guild.get_member(interaction.user.id)
+            user = interaction.guild.get_member(interaction.user.id)
+            if user is None:
+                user = await interaction.guild.fetch_member(interaction.user.id)
             print(valid_roles, user, '\n')
             for role_id in valid_roles:
                 role = interaction.guild.get_role(role_id)
-                if role and user:
+                if role:
                     try:
                         await user.add_roles(role)
                         await interaction.followup.send(f"Role '{role.name}' added to user '{user.display_name}'.", ephemeral=True)
