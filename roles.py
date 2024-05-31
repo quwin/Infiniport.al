@@ -2,7 +2,7 @@ import discord
 import aiosqlite
 import aiohttp
 from constants import RequirementType
-from database import get_discord_roles, get_guild_handle_from_server_id
+from database import get_discord_roles, get_guild_handle
 from profile_utils import lookup_profile
 from guild import guild_data
 
@@ -66,8 +66,9 @@ async def check_eligibility(interaction: discord.Interaction, primary_id):
     valid_roles = []
     print(role_data)
     if role_data and role_data[2] and role_data[6] and role_data[7] and role_data[8]:
+        guild_handle = await get_guild_handle(role_data[2])
         async with aiohttp.ClientSession() as session: #, aiosqlite.connect('leaderboard.db') as c,:
-            guild_info = await guild_data(session, role_data[2])
+            guild_info = await guild_data(session, guild_handle[0])
             print(guild_info)
             #player_data = await lookup_profile(c, primary_id)
             #await c.commit()

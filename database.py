@@ -207,7 +207,7 @@ async def get_discord_roles(server_id):
             print(f"get_discord_roles({server_id}) result: {result}")  # Debugging print
             return result
 
-async def get_guild_handle_from_server_id(guild_id):
+async def get_guild_handle(guild_id):
     async with aiosqlite.connect('leaderboard.db') as db2:
         async with db2.execute('SELECT handle FROM guilds WHERE id = ?', (guild_id,)) as cursor2:
             guild_handle = await cursor2.fetchone()
