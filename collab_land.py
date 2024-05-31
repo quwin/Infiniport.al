@@ -142,7 +142,7 @@ class linkedAccountsView(discord.ui.View):
 
 
     async def get_roles_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
         if self.pixels_ids and self.primary_id and interaction.guild:
             valid_roles = await check_eligibility(interaction, self.primary_id)
             user = interaction.guild.get_member(interaction.user.id)

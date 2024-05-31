@@ -196,12 +196,20 @@ async def batch_update_players(cursor, total_data_batch, skill_data_batch):
         batch.clear()
 
 async def get_discord_roles(server_id):
-    async with aiosqlite.connect('discord.db') as db, db.execute('SELECT role_ids, role_requirements, role_numbers FROM discord_servers WHERE server_id = ?', (server_id,)) as cursor:
-        return await cursor.fetchone()
+    async with aiosqlite.connect('discord.db') as db:
+        async with db.execute('SELECT role_ids, role_requirements, role_numbers FROM discord_servers WHERE server_id = ?', (server_id,)) as cursor:
+            result = await cursor.fetchone()
+            print(f"get_discord_roles({server_id}) result: {result}")  # Debugging print
+            return result
 
 async def get_guild_handle_from_server_id(server_id):
-    async with aiosqlite.connect('discord.db') as db, db.execute('SELECT linked_guild FROM discord_servers WHERE server_id = ?', (server_id,)) as cursor:
-        guild_id = await cursor.fetchone()
-        if guild_id:
-            async with aiosqlite.connect('leaderboard.db') as db, db.execute('SELECT handle FROM guilds WHERE id = ?', (guild_id[0],)) as cursor2:
-                return await cursor2.fetchone()
+    async with aiosqlite.connect('discord.db') as db:
+        async with db.execute('SELECT linked_guild FROM discord_servers WHERE server_id = ?', (server_id,)) as cursor:
+            guild_id = await cursor.fetchone()
+            print(f"get_guild_handle_from_server_id({server_id}) guild_id: {guild_id}")  # Debugging print
+            if guild_id:
+                async with aiosqlite.connect('leaderboard.db') as db2:
+                    async with db2.execute('SELECT handle FROM guilds WHERE id = ?', (guild_id[0],)) as cursor2:
+                        guild_handle = await cursor2.fetchone()
+                        print(f"get_guild_handle_from_server_id({server_id}) guild_handle: {guild_handle}")  # Debugging print
+                        return guild_handle
