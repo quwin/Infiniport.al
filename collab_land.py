@@ -102,6 +102,8 @@ class linkedAccountsView(discord.ui.View):
         self.user_id = user_id
         self.pixels_ids = pixels_ids
         self.usernames = usernames
+        if usernames:
+            self.primary_id = usernames[0]
         #users_checking.append(user_id)
         auth_url = (
             f"https://api.collab.land/oauth2/authorize"
@@ -140,10 +142,11 @@ class linkedAccountsView(discord.ui.View):
 
 
     async def get_roles_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        await interaction.response.defer(thinking=True)
         if self.pixels_ids and self.primary_id and interaction.guild:
             valid_roles = await check_eligibility(interaction, self.primary_id)
             user: discord.Member | None = interaction.guild.get_member(interaction.user.id)
+            print(valid_roles, user, '\n')
             for role_id in valid_roles:
                 role = interaction.guild.get_role(role_id)
                 if role and user:

@@ -78,6 +78,7 @@ def check_guild_conditions(data, player_id, role_requirements, quantity):
     for item in data:
         player = item.get("player", {})
         role = item.get("role", None)
+        print(player, role)
         if (player.get("_id") == player_id) and (role == requirement[1]) and (int(item.get(role_requirements[1])) <= int(quantity)):
             return True
         elif role == 'Watcher' or role is None:
