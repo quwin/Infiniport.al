@@ -148,11 +148,11 @@ async def roles_embed(interaction: discord.Interaction):
             "- Roles are updated once a user links their account, and automatically hourly.\n"
             "- Role settings can be modified for specific roles for Guild Admins, Workers, Members, Pledgers, Supporters and more!\n \n",
             inline=False)
-    if roles and roles[0] and roles[1] and roles[2]:
+    if roles and roles[6] and roles[7] and roles[8]:
         role_list = []
-        role_ids_list = roles[0].split(' ')
-        role_requirements_list = roles[1].split(' ')
-        role_numbers_list = roles[2].split(' ')
+        role_ids_list = roles[6].split(' ')
+        role_requirements_list = roles[7].split(' ')
+        role_numbers_list = roles[8].split(' ')
         
         for i in range(len(role_ids_list)):
             role = interaction.guild.get_role(int(role_ids_list[i]))
