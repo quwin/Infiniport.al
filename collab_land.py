@@ -1,3 +1,4 @@
+from operator import indexOf
 import discord
 from database import fetch_linked_wallets
 from constants import COLLAB_ID, REDIRECT_URI
@@ -102,8 +103,8 @@ class linkedAccountsView(discord.ui.View):
         self.user_id = user_id
         self.pixels_ids = pixels_ids
         self.usernames = usernames
-        if usernames:
-            self.primary_id = usernames[0]
+        if pixels_ids:
+            self.primary_id = pixels_ids[0]
         #users_checking.append(user_id)
         auth_url = (
             f"https://api.collab.land/oauth2/authorize"
@@ -164,7 +165,8 @@ class linkedAccountsView(discord.ui.View):
             await interaction.followup.send("Please link a Pixels Account and select a primary account!", ephemeral=True)
 
     async def select_callback(self, interaction: discord.Interaction):
-        self.primary_id = self.select_menu.values[0]
+        selected_value = self.select_menu.values[0]
+        self.primary_id = self.pixels_ids[self.usernames.index(selected_value)]
         await interaction.response.defer()
 
     async def on_timeout(self):

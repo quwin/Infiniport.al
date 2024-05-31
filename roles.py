@@ -64,12 +64,10 @@ async def check_eligibility(interaction: discord.Interaction, primary_id):
     server_id = interaction.guild.id
     role_data = await get_discord_roles(server_id)
     valid_roles = []
-    print(role_data)
     if role_data and role_data[2] and role_data[6] and role_data[7] and role_data[8]:
         guild_handle = await get_guild_handle(role_data[2])
         async with aiohttp.ClientSession() as session: #, aiosqlite.connect('leaderboard.db') as c,:
             guild_info = await guild_data(session, guild_handle[0])
-            print(guild_info)
             #player_data = await lookup_profile(c, primary_id)
             #await c.commit()
             
