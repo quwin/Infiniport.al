@@ -164,7 +164,8 @@ class linkedAccountsView(discord.ui.View):
 
     async def on_timeout(self):
         try:
-            users_checking.remove(self.user_id)
+            if self.user_id in users_checking:
+                users_checking.remove(self.user_id)
             self.stop()
         except Exception as e:
             print(f"Failed to stop View on timeout: {str(e)}")
