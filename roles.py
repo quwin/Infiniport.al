@@ -55,7 +55,7 @@ async def check_eligibility(interaction: discord.Interaction, primary_id):
     role_data = await get_discord_roles(server_id)
     guild_handle = await get_guild_handle_from_server_id(server_id)
     valid_roles = []
-    if role_data and guild_handle:
+    if role_data and guild_handle and role_data[0] and role_data[1] and role_data[2]:
         async with aiohttp.ClientSession() as session: #, aiosqlite.connect('leaderboard.db') as c,:
             guild_info = await guild_data(session, guild_handle[0])
             #player_data = await lookup_profile(c, primary_id)
@@ -77,6 +77,9 @@ def check_guild_conditions(data, player_id, role_requirements, quantity):
     requirement = role_requirements[0].split("_")
     for item in data:
         player = item.get("player", {})
-        if (player.get("_id") == player_id) and (item.get("role") == requirement[1]) and (int(item.get(role_requirements[1])) <= int(quantity)):
-                return True
+        role = item.get("role", None)
+        if (player.get("_id") == player_id) and (role == requirement[1]) and (int(item.get(role_requirements[1])) <= int(quantity)):
+            return True
+        elif role == 'Watcher' or role is None:
+            return False
     return False

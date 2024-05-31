@@ -44,8 +44,17 @@ class CollabButtons(discord.ui.View):
 async def manage_collab_link(interaction):
     user_id = str(interaction.user.id)
     existing_wallets = await fetch_linked_wallets(user_id)
-    embed = await show_linked_accounts(existing_wallets)
-    await interaction.followup.send(embed=embed, view=linkedAccountsView(user_id, existing_wallets), ephemeral=True)
+    
+    if existing_wallets and existing_wallets[2]:
+        pixels_ids = list(set(existing_wallets[2].split(" ")))
+        username_json = await get_accounts_usernames(userlimiter, pixels_ids)
+        usernames = [username_json.get(id) for id in pixels_ids]
+    else:
+        pixels_ids = []
+        usernames = []
+        
+    embed = await show_linked_accounts(usernames)
+    await interaction.followup.send(embed=embed, view=linkedAccountsView(user_id, pixels_ids, usernames), ephemeral=True)
 
 # Embed for showing how to link your Pixels Account to the Bot
 def collab_embed():
@@ -66,21 +75,16 @@ async def collab_channel(channel):
 
         
 # Function to show the linked accounts, and allow people to link their accounts
-async def show_linked_accounts(existing_wallets):
-    if existing_wallets:
+async def show_linked_accounts(usernames):
+    if usernames:
         embed = discord.Embed(
               title="My Connected Pixels.xyz Accounts",
               description="Data powered by Collab.Land\n \n",
               color=0x00ff00)
         accounts = ''
-        # Formats the string into an array + removes duplicate account IDs
-        formatted = list(set(existing_wallets[2].split(" ")))
-        usernames = await get_accounts_usernames(userlimiter, formatted)
-        for mid in formatted:
-            accounts += f"- {usernames.get(mid)} \n"
- 
+        for name in usernames:
+            accounts += f"- {name} \n"
 
-            
         embed.add_field(name="", value=accounts, inline=False)
     else:
         embed = discord.Embed(
@@ -93,15 +97,11 @@ async def show_linked_accounts(existing_wallets):
     return embed
 
 class linkedAccountsView(discord.ui.View):
-    def __init__(self, user_id, existing_wallets):
+    def __init__(self, user_id, pixels_ids, usernames):
         super().__init__(timeout=900.0)
         self.user_id = user_id
-        if not existing_wallets:
-            self.pixels_ids = []
-            self.primary_id = None
-        else:
-            self.pixels_ids = list(set(existing_wallets[2].split(" "))) if existing_wallets[2] else []
-            self.primary_id = existing_wallets[3] if existing_wallets[3] else None
+        self.pixels_ids = pixels_ids
+        self.usernames = usernames
         #users_checking.append(user_id)
         auth_url = (
             f"https://api.collab.land/oauth2/authorize"
@@ -112,10 +112,10 @@ class linkedAccountsView(discord.ui.View):
             f"&state={user_id}"
         )
 
-        if self.pixels_ids:
+        if self.usernames:
             options=[]
-            for id in self.pixels_ids:
-                options.append(discord.SelectOption(label=f"{id}"))
+            for username in self.usernames:
+                options.append(discord.SelectOption(label=f"{username}"))
                 
             self.select_menu = discord.ui.Select(
                 placeholder="Select your primary Pixels account:",
