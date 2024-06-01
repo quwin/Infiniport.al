@@ -106,6 +106,8 @@ class linkedAccountsView(discord.ui.View):
         self.usernames = usernames
         if pixels_ids:
             self.primary_id = pixels_ids[0]
+        else:
+            self.primary_id = None
         #users_checking.append(user_id)
         auth_url = (
             f"https://api.collab.land/oauth2/authorize"
@@ -162,7 +164,7 @@ class linkedAccountsView(discord.ui.View):
                         await interaction.followup.send(f"Failed to add role: {e}", ephemeral=True)
                 return
         else:
-            await interaction.followup.send("Please link a Pixels Account and select a primary account!", ephemeral=True)
+            await interaction.followup.send("Please link a Pixels Account and select a primary account! \n If you already have, close both tabs and try again!", ephemeral=True)
 
     async def select_callback(self, interaction: discord.Interaction):
         selected_value = self.select_menu.values[0]
