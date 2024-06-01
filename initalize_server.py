@@ -206,7 +206,7 @@ def commands_embed():
             value=
             "- /lookup - `input:`\n  >  Lookup a Pixel player's profile using their username, userID, or wallet address.\n" +
             "- /leaderboard - `skill:` | `sort:` | `page_number:` \n  >  See the leaderboard of your server's assigned Guild. Only shard stakers with the Guild Member Role+ are shown\n" +
-            "- /global_leaderboard - `skill:` | `sort:` | `page_number:` \n  >  See the global leaderboard of every Pixels.\n" +
+            "- /global_leaderboard - `skill:` | `sort:` | `page_number:` \n  >  See the global leaderboard of every Pixels Player.\n" +
             "- /task create \n  > Create a task for other players to complete! \n" +
             "- /taskboard \n  > View the tasks others have created"
             ,inline=False)
