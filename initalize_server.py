@@ -38,7 +38,7 @@ class firstMessageView(discord.ui.View):
 
     async def role_settings_callback(self, interaction: discord.Interaction):
         await interaction.response.send_message(embed=await roles_embed(interaction),
-                                                view=rolesView(),
+                                                view=rolesView(interaction.guild),
                                                 ephemeral=True)
 
     async def bot_commands_callback(self, interaction: discord.Interaction):
