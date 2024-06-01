@@ -1,4 +1,6 @@
 import discord
+from discord import message
+from discord import reaction
 from discord.ext import commands, tasks
 from discord import app_commands
 from profile_utils import lookup_profile, embed_profile
@@ -41,12 +43,17 @@ async def on_guild_join(guild: discord.Guild):
   # Doesn't work if they can be None
   if guild.default_role and guild.me:
     
-    overwrites = {
+    settings_overwrites = {
       guild.default_role: discord.PermissionOverwrite(view_channel=False),
       guild.me: discord.PermissionOverwrite(view_channel=True),
     }
-    settings = await guild.create_text_channel('infiniportal-config', overwrites=overwrites)
-    connect = await guild.create_text_channel('infiniportal-connect', overwrites=overwrites)
+
+    connect_overwrites = {
+      guild.default_role: discord.PermissionOverwrite(send_messages=False, add_reactions=False),
+      guild.me: discord.PermissionOverwrite(view_channel=True),
+    }
+    settings = await guild.create_text_channel('infiniportal-config', overwrites=settings_overwrites)
+    connect = await guild.create_text_channel('infiniportal-connect', overwrites=connect_overwrites)
 
     await config_channel(settings)
     await collab_channel(connect)
@@ -64,7 +71,10 @@ async def init_job_views(client: discord.Client):
 async def clear_commands(interaction, server: str | None = None):
   if interaction.user.id != 239235420104163328:
     return
-  tree.clear_commands(guild=None)
+  if server:
+    tree.clear_commands(guild=discord.Object(id=server))
+  else:
+    tree.clear_commands(guild=None)
   if server is None:
     await tree.sync()
   else:

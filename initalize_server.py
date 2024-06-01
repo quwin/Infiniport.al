@@ -130,13 +130,16 @@ def join_embed():
             f"Anyone who can access this channel can modify the settings for your server's {BOT_NAME} application. \n \n" + 
             "To function as expected: \n"
             "- Collab.Land should also be within the Discord Server. \n" +
-            "- The server must have an assigned Pixels Guild in [_Server Settings_]. \n" +
+            "- The server must have an assigned Pixels Guild in [__Server Settings__]. \n" +
             "- The bot requires the `Administrator` role, or at a minimum the permissions: \n" +
             " > `Read Messages/View Channels`, \n" +
             " > `Send Messages`, \n" +
             " > `Manage Messages`, \n" +
             " > `Manage Channels`, \n" +
             " > `Manage Roles` \n" +
+            " > `Embed Links` \n" +
+            " > `Mention Everyone` \n" +
+            " > `Use Activities` \n" +
             "- This `infiniportal-config` channel cannnot be deleted \n" +
             "- All settings changes and bot updates will occur in this channel"
             ,
@@ -168,7 +171,7 @@ async def roles_embed(interaction: discord.Interaction):
             value=f"{EMOJI} Modify your server's role settings here! {EMOJI}\n \n" +
             "- Roles can be given to users which connect their Pixels accounts in `infiniportal-connect`. \n \n" + 
             "- After choosing a role and access level, you will be able to input the number of (Staked) Shards required for the role.\n \n" +
-            "- Roles are updated once a user links their account, and automatically hourly.\n"
+            "- Roles are updated once a user links their account, and automatically hourly (soon).\n"
             "- Role settings can be modified for specific roles for Guild Admins, Workers, Members, Pledgers, Supporters and more!\n \n",
             inline=False)
     if roles and roles[6] and roles[7] and roles[8]:
@@ -188,7 +191,7 @@ async def roles_embed(interaction: discord.Interaction):
                 value='\n'.join(role_list),
                 inline=False)
 
-    embed.add_field(name="", value="Create a new role rule below. \nCreating a new rule for a role with an existing rule will Overwrite it:", inline=False)
+    embed.add_field(name="", value="Create a new role rule below. \nCreating a new rule for a role with an existing rule will overwrite it:", inline=False)
     return embed
 
 async def config_channel(channel):

@@ -9,7 +9,7 @@ async def nft_land_data(conn, session):
     total_data_batch = []
     skill_data_batch = {skill: [] for skill in SKILLS}
     cursor = await conn.cursor()
-    limiter = AdaptiveRateLimiter(SPECK_RATE/2, 1)
+    limiter = AdaptiveRateLimiter(3, 1)
 
     
     while i <= 5000:
@@ -42,8 +42,7 @@ async def speck_data(conn, session):
     total_data_batch = []
     skill_data_batch = {skill: [] for skill in SKILLS}
     cursor = await conn.cursor()
-    limiter = AdaptiveRateLimiter(SPECK_RATE/2, 1)
-
+    limiter = AdaptiveRateLimiter(3, 1)
 
     while True:
         if i % BATCH_SIZE == 0:
