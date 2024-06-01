@@ -63,13 +63,29 @@ class settingsView(discord.ui.View):
             print(f"Failed to stop View on timeout: {str(e)}")
 
 class rolesView(discord.ui.View):
-    def __init__(self):
+    def __init__(self, guild):
         super().__init__(timeout=900.0)
         self.chosen_role = None
+        self.guild = guild
 
-    @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Choose the role to assign:")
-    async def choose_role(self, interaction: discord.Interaction, select):
-        self.chosen_role = select.values[0]
+        role_options = [
+            discord.SelectOption(label=role.name, value=str(role.id))
+            for role in guild.roles if not role.is_default()
+        ]
+
+        self.role_options = discord.ui.Select(
+            placeholder="Select a role...",
+            min_values=1,
+            max_values=1,
+            options=role_options
+        )
+
+        self.role_options.callback = self.role_options_callback
+        self.add_item(self.role_options)
+
+    async def role_options_callback(self, interaction: discord.Interaction):
+        role_id = int(self.role_options.values[0])
+        self.chosen_role = self.guild.get_role(role_id)
         await interaction.response.defer()
 
     options=[

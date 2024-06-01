@@ -144,18 +144,17 @@ class linkedAccountsView(discord.ui.View):
 
     async def get_roles_callback(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True, ephemeral=True)
-        if self.pixels_ids and self.primary_id and interaction.guild:
+        if self.primary_id and interaction.guild:
             valid_roles = await check_eligibility(interaction, self.primary_id)
             user = interaction.guild.get_member(interaction.user.id)
             if user is None:
                 user = await interaction.guild.fetch_member(interaction.user.id)
             for role_id in valid_roles:
                 role = interaction.guild.get_role(int(role_id))
-                print(role)
                 if role:
                     try:
                         await user.add_roles(role)
-                        await interaction.followup.send(f"Role '{role.name}' added to user '{user.display_name}'.", ephemeral=True)
+                        await interaction.followup.send(f"Role {role.mention} added to user '{user.display_name}'.", ephemeral=True)
                     except discord.Forbidden:
                         await interaction.followup.send("Role setting failed, improper permissions granted", ephemeral=True)
                     except discord.HTTPException as e:

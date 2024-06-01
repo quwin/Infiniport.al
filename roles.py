@@ -89,7 +89,7 @@ def check_guild_conditions(data, player_id, role_requirements, quantity):
         player = item.get("player", {})
         role = item.get("role", None)
         if (player.get("_id") == player_id) and (role == requirement[1]) and (int(item.get(role_requirements[1])) <= int(quantity)):
-            print(f"Found role for player {player_id} | {role}| {int(quantity)}\n")
+            print(f"Found role for player {player_id} | {role} | {int(quantity)}\n")
             return True
         elif role == 'Watcher' or role is None:
             return False
