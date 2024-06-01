@@ -68,10 +68,13 @@ class rolesView(discord.ui.View):
         self.chosen_role = None
         self.guild = guild
 
+        roles = [role for role in guild.roles if not role.is_default()][:24]
+
         role_options = [
             discord.SelectOption(label=role.name, value=str(role.id))
-            for role in guild.roles if not role.is_default()
+            for role in roles
         ]
+        
         options=[
             discord.SelectOption(label="Guild Admin", value="Guild_Admin"),
             discord.SelectOption(label="Guild Worker", value="Guild_Worker"),
