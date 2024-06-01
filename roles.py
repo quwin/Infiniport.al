@@ -88,9 +88,9 @@ async def check_eligibility(interaction: discord.Interaction, primary_id):
 def check_guild_conditions(data, player_id, role_requirements, quantity):
     requirement = role_requirements[0].split("_")
     for item in data:
+        print(item)
         player = item.get("player", {})
         role = item.get("role", None)
-        print(role_requirements[1] == 'stakedShards', role_requirements[1], 'stakedShards')
         print(f"Found role for player {player.get("_id")} | {role} == {requirement[1]} | {float(item.get(role_requirements[1], 'inf'))} == {float(quantity)}\n")
         if (player.get("_id") == player_id) and (role == requirement[1]) and (float(item.get(role_requirements[1], 'inf')) <= float(quantity)):
             print(f"Found role for player {player_id} | {role} | {float(quantity)}\n")
