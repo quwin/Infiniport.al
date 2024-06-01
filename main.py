@@ -53,7 +53,7 @@ async def on_guild_join(guild: discord.Guild):
       guild.me: discord.PermissionOverwrite(view_channel=True),
     }
     settings = await guild.create_text_channel('infiniportal-config', overwrites=settings_overwrites)
-    connect = await guild.create_text_channel('infiniportal-connect', overwrites=connect_overwrites)
+    connect = await guild.create_text_channel('infiniportal-connect', overwrites=settings_overwrites)
 
     await config_channel(settings)
     await collab_channel(connect)
