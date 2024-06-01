@@ -83,22 +83,22 @@ class rolesView(discord.ui.View):
             #discord.SelectOption(label="Player_Level", value=),
             #discord.SelectOption(label="Skill_Level", value=),
         ]
-
-        self.role_options = discord.ui.Select(
-            placeholder="Select a role...",
-            min_values=1,
-            max_values=1,
-            options=role_options
-        )
+        if role_options:
+            self.role_options = discord.ui.Select(
+                placeholder="Select a role...",
+                min_values=1,
+                max_values=1,
+                options=role_options
+            )
+            self.role_options.callback = self.role_options_callback
+            self.add_item(self.role_options)
+            
         self.select_object = discord.ui.Select(
             placeholder="Select a role...",
             min_values=1,
             max_values=1,
             options=options
         )
-
-        self.role_options.callback = self.role_options_callback
-        self.add_item(self.role_options)
         self.select_object.callback = self.select_object_callback
         self.add_item(self.select_object)
 
