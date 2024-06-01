@@ -158,11 +158,18 @@ class linkedAccountsView(discord.ui.View):
                     try:
                         await user.add_roles(role)
                         await interaction.followup.send(f"Role {role.mention} added to user '{user.display_name}'.", ephemeral=True)
+                        return
                     except discord.Forbidden:
                         await interaction.followup.send("Role setting failed, improper permissions granted", ephemeral=True)
+                        return
                     except discord.HTTPException as e:
                         await interaction.followup.send(f"Failed to add role: {e}", ephemeral=True)
-                return
+                        return
+                else:
+                    await interaction.followup.send("No Roles to assign!", ephemeral=True)
+                    return
+            await interaction.followup.send("No Roles to assign!", ephemeral=True)
+            return
         else:
             await interaction.followup.send("Please link a Pixels Account and select a primary account! \n If you already have, close both tabs and try again!", ephemeral=True)
 
