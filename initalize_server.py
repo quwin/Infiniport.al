@@ -42,7 +42,7 @@ class firstMessageView(discord.ui.View):
                                                 ephemeral=True)
 
     async def bot_commands_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        await interaction.response.send_message(embed=commands_embed(), ephemeral=True)
 
 class settingsView(discord.ui.View):
     def __init__(self):
@@ -196,3 +196,19 @@ async def roles_embed(interaction: discord.Interaction):
 
 async def config_channel(channel):
     await channel.send(embed=join_embed(), view=firstMessageView())
+
+def commands_embed():
+  embed = discord.Embed(
+      title=f"{BOT_NAME} Command List:",
+      color=0x00ff00)
+  embed.set_author(name=BOT_NAME)
+  embed.add_field(name="",
+            value=
+            " - /lookup - 'input:'\n  -  Lookup a Pixel player's profile using their username, userID, or wallet address.\n" +
+            " - /leaderboard - 'skill:' | 'sort' | 'page_number' \n  -  See the leaderboard of your server's assigned Guild. Only shard stakers with the Guild Member Role+ are shown\n" +
+            " - /global_leaderboard - 'skill:' | 'sort' | 'page_number' \n  -  See the global leaderboard of every Pixels.\n" +
+            " - /task create \n  - Create a Task for other players to complete! \n" +
+            " - /taskboard \n  - CView the tasks others have created"
+            ,inline=False)
+  embed.set_thumbnail(url='https://d31ss916pli4td.cloudfront.net/environments/icons/land.png')
+  return embed
