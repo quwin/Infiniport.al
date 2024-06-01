@@ -72,6 +72,17 @@ class rolesView(discord.ui.View):
             discord.SelectOption(label=role.name, value=str(role.id))
             for role in guild.roles if not role.is_default()
         ]
+        options=[
+            discord.SelectOption(label="Guild Admin", value="Guild_Admin"),
+            discord.SelectOption(label="Guild Worker", value="Guild_Worker"),
+            discord.SelectOption(label="Guild Member", value="Guild_Member"),
+            discord.SelectOption(label="Shard Pledger", value="Shard_Pledger"),
+            discord.SelectOption(label="Shard Owner", value="Shard_Owner"),
+            #discord.SelectOption(label="Land_Pledger", value=),
+            #discord.SelectOption(label="Land_Owner", value=),
+            #discord.SelectOption(label="Player_Level", value=),
+            #discord.SelectOption(label="Skill_Level", value=),
+        ]
 
         self.role_options = discord.ui.Select(
             placeholder="Select a role...",
@@ -79,31 +90,26 @@ class rolesView(discord.ui.View):
             max_values=1,
             options=role_options
         )
+        self.select_object = discord.ui.Select(
+            placeholder="Select a role...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
 
         self.role_options.callback = self.role_options_callback
         self.add_item(self.role_options)
+        self.select_object.callback = self.select_object_callback
+        self.add_item(self.select_object)
 
     async def role_options_callback(self, interaction: discord.Interaction):
         role_id = int(self.role_options.values[0])
         self.chosen_role = self.guild.get_role(role_id)
         await interaction.response.defer()
 
-    options=[
-        discord.SelectOption(label="Guild_Admin"),
-        discord.SelectOption(label="Guild_Worker"),
-        discord.SelectOption(label="Guild_Member"),
-        discord.SelectOption(label="Shard_Pledger"),
-        discord.SelectOption(label="Shard_Owner"),
-        #discord.SelectOption(label="Land_Pledger"),
-        #discord.SelectOption(label="Land_Owner"),
-        #discord.SelectOption(label="Player_Level"),
-        #discord.SelectOption(label="Skill_Level"),
-    ]
-        
-    @discord.ui.select(cls=discord.ui.Select, options=options, placeholder="Choose the required positiom for the role:")
-    async def select_object_callback(self, interaction: discord.Interaction, select):
+    async def select_object_callback(self, interaction: discord.Interaction):
         if self.chosen_role is not None:
-            await interaction.response.send_modal(roleAssign(self.chosen_role, select.values[0]))
+            await interaction.response.send_modal(roleAssign(self.chosen_role, self.select_object.values[0]))
         else: 
             await interaction.response.defer()
 
@@ -135,6 +141,7 @@ def join_embed():
             "- All settings changes and bot updates will occur in this channel"
             ,
             inline=False)
+  embed.set_thumbnail(url='https://d31ss916pli4td.cloudfront.net/environments/icons/land.png')
   return embed
 
 def settings_embed():

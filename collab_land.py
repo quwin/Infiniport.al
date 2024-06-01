@@ -68,6 +68,7 @@ def collab_embed():
                   "We will never ask for your seed phrase. We will never DM you.\n" + 
                   "This verification process is done through <@704521096837464076>",
                   inline=False)
+    embed.set_thumbnail(url='https://d31ss916pli4td.cloudfront.net/environments/icons/land.png')
     return embed
 
 # Create and manage collab_embed()
