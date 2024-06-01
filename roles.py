@@ -80,6 +80,8 @@ async def check_eligibility(interaction: discord.Interaction, primary_id):
             isValid = check_guild_conditions(guild_info["guildMembers"], primary_id, format, role_numbers[i])
             if isValid:
                 valid_roles.append(role_id)
+    else: 
+        print(f"invalid role data {role_data} for server {server_id}")
 
     return valid_roles
 
@@ -89,7 +91,7 @@ def check_guild_conditions(data, player_id, role_requirements, quantity):
         player = item.get("player", {})
         role = item.get("role", None)
         print(f"Found role for player {player_id} == {player.get("_id")} | {role} == {requirement[1]} | {int(item.get(role_requirements[1]))} == {int(quantity)}\n")
-        if (player.get("_id") == player_id) and (role == requirement[1]) and (int(item.get(role_requirements[1])) <= int(quantity)):
+        if (player.get("_id") == player_id) and (role == requirement[1]) and (float(item.get(role_requirements[1], 'inf')) <= float(quantity)):
             print(f"Found role for player {player_id} | {role} | {int(quantity)}\n")
             return True
         elif role == 'Watcher' or role is None:
