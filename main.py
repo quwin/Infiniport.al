@@ -27,9 +27,13 @@ tree = app_commands.CommandTree(client)
 
 @client.event
 async def on_ready():
-  await tree.sync(guild=discord.Object(id=1234015429874417706))
-  print(f'We have logged in as {client.application_id}')
-  await init_db()
+  try:
+    await tree.sync(guild=discord.Object(id=1234015429874417706))
+    print(f'We have logged in as {client.application_id}')
+    await init_db()
+  except Exception as e:
+    print(f"Error: {e}")
+    
   await init_job_views(client)
   client.add_view(CollabButtons())
   client.add_view(firstMessageView())
