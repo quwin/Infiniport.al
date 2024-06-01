@@ -94,7 +94,7 @@ class rolesView(discord.ui.View):
             self.add_item(self.role_options)
             
         self.select_object = discord.ui.Select(
-            placeholder="Select a role...",
+            placeholder="Select a Pixels requirement for the role...",
             min_values=1,
             max_values=1,
             options=options
@@ -204,11 +204,11 @@ def commands_embed():
   embed.set_author(name=BOT_NAME)
   embed.add_field(name="",
             value=
-            " - /lookup - 'input:'\n  -  Lookup a Pixel player's profile using their username, userID, or wallet address.\n" +
-            " - /leaderboard - 'skill:' | 'sort' | 'page_number' \n  -  See the leaderboard of your server's assigned Guild. Only shard stakers with the Guild Member Role+ are shown\n" +
-            " - /global_leaderboard - 'skill:' | 'sort' | 'page_number' \n  -  See the global leaderboard of every Pixels.\n" +
-            " - /task create \n  - Create a Task for other players to complete! \n" +
-            " - /taskboard \n  - CView the tasks others have created"
+            "- /lookup - `input:`\n  >  Lookup a Pixel player's profile using their username, userID, or wallet address.\n" +
+            "- /leaderboard - `skill:` | `sort:` | `page_number:` \n  >  See the leaderboard of your server's assigned Guild. Only shard stakers with the Guild Member Role+ are shown\n" +
+            "- /global_leaderboard - `skill:` | `sort:` | `page_number:` \n  >  See the global leaderboard of every Pixels.\n" +
+            "- /task create \n  > Create a task for other players to complete! \n" +
+            "- /taskboard \n  > View the tasks others have created"
             ,inline=False)
   embed.set_thumbnail(url='https://d31ss916pli4td.cloudfront.net/environments/icons/land.png')
   return embed
