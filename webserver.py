@@ -59,7 +59,7 @@ def oauth2_callback():
         addresses = []
         player_ids = []
         
-        for wallet in user_wallets_data.get("items"):
+        for wallet in user_wallets_data.get("items", []):
             type = wallet.get("walletType")
             if type == 'evm' or type == 'metamask' or type == 'ronin':
                 address = wallet.get("address")
@@ -68,10 +68,9 @@ def oauth2_callback():
                     addresses.append(address)
                     player_ids.append(account_data.get("_id"))
                     
-        formatted_addresses = " ".join(addresses)
-        formatted_player_ids = " ".join(player_ids)
-        
         if addresses and player_ids:
+            formatted_addresses = " ".join(addresses)
+            formatted_player_ids = " ".join(player_ids)
             loop.run_until_complete(add_collab_wallets(
                 user_id, 
                 formatted_addresses,
