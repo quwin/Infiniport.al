@@ -137,12 +137,15 @@ async def update_job_claimer(job_id, claimer_id):
         await db.commit()
 
 async def delete_job(job_id):
-    async with aiosqlite.connect('jobs.db') as db:
-        await db.execute('''
-            DELETE FROM jobs
-            WHERE job_id = ?
-        ''', (job_id,))
-        await db.commit()
+    try:
+        async with aiosqlite.connect('jobs.db') as db:
+            await db.execute('''
+                DELETE FROM jobs
+                WHERE job_id = ?
+            ''', (job_id,))
+            await db.commit()
+    except Exception as e:
+        print(f"An task deletion error occurred: {e}")
 
 async def fetch_job(job_id):
     async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT * FROM jobs WHERE job_id = ?', (job_id,)) as cursor:

@@ -172,13 +172,11 @@ async def taskboard(interaction: discord.Interaction, page_number: int = 1):
   embed = await show_unclaimed_jobs(interaction, page_number)
   await interaction.response.send_message(embed=embed, ephemeral=True)
 
-
 @tasks.loop(minutes=2880)
 async def batch_speck_update():
   async with aiosqlite.connect(
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await speck_data(conn, session)
-
 
 @tasks.loop(minutes=120)
 async def batch_nft_land_update():

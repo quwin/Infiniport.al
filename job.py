@@ -46,6 +46,7 @@ class JobView(discord.ui.View):
     async def close_job_button_callback(self, interaction: discord.Interaction):
         await self.handle_interaction(interaction, "close_job_")
 
+    
     async def bump_button_callback(self, interaction: discord.Interaction):
         current_time = time.time()
         wait_time = current_time - self.last_bumped
@@ -55,31 +56,42 @@ class JobView(discord.ui.View):
         self.last_bumped = current_time
         await self.bump_message(interaction)
 
+    
     async def edit_button_callback(self, interaction: discord.Interaction):
-        current_time = time.time()
-        wait_time = current_time - self.last_bumped
-        if wait_time < 300:
-            await interaction.response.send_message(f"You can edit this task again <t:{int(current_time+300-wait_time)}:R>", ephemeral=True)
-            return
-            
-        job_data = await fetch_job(self.job_id)
-        if job_data and job_data[1] == interaction.user.id:
-            await interaction.response.send_modal(JobInput(self, job_data))
-        else:
-            await interaction.response.defer()
-            return
-        
+        try:
+            current_time = time.time()
+            wait_time = current_time - self.last_bumped
+            if wait_time < 300:
+                await interaction.response.send_message(f"You can edit this task again <t:{int(current_time+300-wait_time)}:R>", ephemeral=True)
+                return
+                
+            job_data = await fetch_job(self.job_id)
+            if job_data and job_data[1] == interaction.user.id:
+                await interaction.response.send_modal(JobInput(self, job_data))
+            else:
+                await interaction.response.defer()
+                return
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the View Channel permission for this channel!", ephemeral=True)
+
+    
     async def handle_interaction(self, interaction: discord.Interaction, custom_id: str):
-        await interact_job(interaction, self, self.job_id, custom_id)
+        try:
+            await interact_job(interaction, self, self.job_id, custom_id)
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the View Channel permission for this channel!", ephemeral=True)
 
+    
     async def bump_message(self, interaction: discord.Interaction):
-        original_message = interaction.message
-        if original_message:
-            embed = original_message.embeds[0] if original_message.embeds else None
-            await original_message.delete()
-            if embed:
-                await interaction.response.send_message(embed=embed, view=self)
-
+        try:
+            original_message = interaction.message
+            if original_message:
+                embed = original_message.embeds[0] if original_message.embeds else None
+                await original_message.delete()
+                if embed:
+                    await interaction.response.send_message(embed=embed, view=self)
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the View Channel permission for this channel!", ephemeral=True)
 
 async def interact_job(interaction: discord.Interaction, view, job_id: str, button: str):
   job = await fetch_job(job_id)
@@ -106,12 +118,8 @@ async def interact_job(interaction: discord.Interaction, view, job_id: str, butt
         await interaction.response.defer()
         
     elif button == "close_job_":
-      if interaction.user.id == author_id:
-        await delete_job(job_id)
-        await interaction.message.delete()
-        return
-      elif interaction.user.id == claimer_id:
-        await interaction.response.send_message(f"<@{author_id}>, {interaction.user.mention} has completed your task!")
+      if interaction.user.id == author_id or interaction.user.id == claimer_id:
+        await interaction.response.send_message(f"<@{author_id}>'s task of {quantity} x {item} has been completed by {interaction.user.mention} for {reward}!")
         await delete_job(job_id)
         await interaction.message.delete()
         return
