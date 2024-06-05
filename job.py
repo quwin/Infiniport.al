@@ -72,14 +72,14 @@ class JobView(discord.ui.View):
                 await interaction.response.defer()
                 return
         except Exception as e:
-            await interaction.response.send_message(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the View Channel permission for this channel!", ephemeral=True)
+            await interaction.followup.send(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the View Channel permission for this channel!", ephemeral=True)
 
     
     async def handle_interaction(self, interaction: discord.Interaction, custom_id: str):
         try:
             await interact_job(interaction, self, self.job_id, custom_id)
         except Exception as e:
-            await interaction.response.send_message(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the View Channel permission for this channel!", ephemeral=True)
+            await interaction.followup.send(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the View Channel permission for this channel!", ephemeral=True)
 
     
     async def bump_message(self, interaction: discord.Interaction):
@@ -91,7 +91,7 @@ class JobView(discord.ui.View):
                 if embed:
                     await interaction.response.send_message(embed=embed, view=self)
         except Exception as e:
-            await interaction.response.send_message(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the View Channel permission for this channel!", ephemeral=True)
+            await interaction.followup.send(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the View Channel permission for this channel!", ephemeral=True)
 
 async def interact_job(interaction: discord.Interaction, view, job_id: str, button: str):
   job = await fetch_job(job_id)
