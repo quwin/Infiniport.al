@@ -76,10 +76,10 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         await create_or_edit_job(interaction, item, quantity, reward, details, time_limit, self.view, interaction_id, claimer_id)
         await add_job(interaction_id, author_id, item, quantity, reward, details, time_limit, claimer_id)
         
-        async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
-            print(f"Error: {error}")
-            await interaction.response.send_message(f"Failed to update the job: {str(error)}", ephemeral=True)
-            return
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        print(f" Job update/create error: {error}")
+        await interaction.followup.send(f"Failed to create/update the job: {error}", ephemeral=True)
+        return
 
 
 async def create_or_edit_job(interaction: discord.Interaction, item, quantity, reward, details, time_limit, view, job_id=None,  claimer_id=None):

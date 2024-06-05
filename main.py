@@ -109,21 +109,26 @@ async def raw_sql(interaction, execute: str):
               description="Lookup a player's Pixels profile")
 @app_commands.describe(input="Enter a user's Username, UserID, or Wallet Address")
 async def lookup(interaction, input: str):
-  async with aiosqlite.connect('leaderboard.db') as conn:
-    c = await conn.cursor()
-    result = await lookup_profile(c, input)
-    if result is None:
-      string = f"Could not find the player `{input}`. Please try again"
-      await interaction.response.send_message(string, ephemeral=True)
-      return
-    (data, total_levels, total_skills) = result
-
-    embed = embed_profile(data, total_levels, total_skills)
-    await interaction.response.send_message(embed=embed)
-
-    await conn.commit()
-
-  pass
+  try:
+    async with aiosqlite.connect('leaderboard.db') as conn:
+      c = await conn.cursor()
+      result = await lookup_profile(c, input)
+      if result is None:
+        string = f"Could not find the player `{input}`. Please try again"
+        await interaction.response.send_message(string, ephemeral=True)
+        return
+      (data, total_levels, total_skills) = result
+  
+      embed = embed_profile(data, total_levels, total_skills)
+      await interaction.response.send_message(embed=embed)
+  
+      await conn.commit()
+  except Exception as e:
+    if interaction.guild:
+      print(f"/lookup error in server {interaction.guild.id} / {interaction.guild.name}: {e}")
+    else:
+      print(f"No guild in /lookup error! {e}")
+    await interaction.followup.send(f"Error: {e}", ephemeral=True)
 
 @tree.command(name="global_leaderboard",
               description="Look at a ranking of (almost) every Pixels Player!")
@@ -136,7 +141,14 @@ async def global_leaderboard(interaction: discord.Interaction,
                              page_number: int = 1):
   skill_value = skill.value
   sort_value = sort.value
-  await manage_leaderboard(interaction, skill_value, sort_value, page_number)
+  try:
+    await manage_leaderboard(interaction, skill_value, sort_value, page_number)
+  except Exception as e:
+    if interaction.guild:
+      print(f"GLB Error in server {interaction.guild.id} / {interaction.guild.name}: {e}")
+    else:
+      print(f"No guild in GLB error! {e}")
+    await interaction.followup.send(f"Error: {e}", ephemeral=True)
 
 
 @tree.command(name="leaderboard",
@@ -150,8 +162,15 @@ async def leaderboard(interaction: discord.Interaction,
                              page_number: int = 1):
   skill_value = skill.value
   sort_value = sort.value
+  if interaction.guild is None:
+    await interaction.response.send_message("This command can only be used in a server!", ephemeral=True)
+    return
   server_id = interaction.guild.id
-  await manage_leaderboard(interaction, skill_value, sort_value, page_number, server_id)
+  try:
+    await manage_leaderboard(interaction, skill_value, sort_value, page_number, server_id)
+  except Exception as e:
+    print(f"Leadboard Error in server {server_id} / {interaction.guild.name}: {e}")
+    await interaction.followup.send(f"Error: {e}", ephemeral=True)
 
 # Define the group
 job_group = app_commands.Group(name="task", description="View, modify, and create tasks for other users to complete!")
@@ -169,8 +188,15 @@ tree.add_command(job_group)
   description="View the tasks available to complete!")
 @app_commands.describe(page_number="Enter the page to go to")
 async def taskboard(interaction: discord.Interaction, page_number: int = 1):
-  embed = await show_unclaimed_jobs(interaction, page_number)
-  await interaction.response.send_message(embed=embed, ephemeral=True)
+  try:
+    embed = await show_unclaimed_jobs(interaction, page_number)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+  except Exception as e:
+    if interaction.guild:
+      print(f"Taskboard error in server {interaction.guild.id} / {interaction.guild.name}: {e}")
+    else:
+      print(f"No guild in Taskboard error! {e}")
+    await interaction.response.send_message(f"Error: {e}", ephemeral=True)
 
 @tasks.loop(minutes=2880)
 async def batch_speck_update():

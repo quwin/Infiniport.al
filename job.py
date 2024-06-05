@@ -72,15 +72,14 @@ class JobView(discord.ui.View):
                 await interaction.response.defer()
                 return
         except Exception as e:
-            await interaction.followup.send(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the required permissions for viewing and interacting with this channel!", ephemeral=True)
+            await job_error(e, interaction)
 
     
     async def handle_interaction(self, interaction: discord.Interaction, custom_id: str):
         try:
             await interact_job(interaction, self, self.job_id, custom_id)
         except Exception as e:
-            await interaction.followup.send(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the required permissions for viewing and interacting with this channel!", ephemeral=True)
-
+            await job_error(e, interaction)
     
     async def bump_message(self, interaction: discord.Interaction):
         try:
@@ -91,7 +90,11 @@ class JobView(discord.ui.View):
                 if embed:
                     await interaction.response.send_message(embed=embed, view=self)
         except Exception as e:
-            await interaction.followup.send(f"An error occurred while processing your request: {e} \nMake sure that Infiniportal has the required permissions for viewing and interacting with this channel!", ephemeral=True)
+            await job_error(e, interaction)
+
+
+async def job_error(error, interaction: discord.Interaction):
+    await interaction.followup.send(f"An error occurred while processing your request: {error} \nMake sure that Infiniportal has the required permissions for viewing and interacting with this channel!", ephemeral=True)
 
 async def interact_job(interaction: discord.Interaction, view, job_id: str, button: str):
   job = await fetch_job(job_id)
@@ -118,15 +121,15 @@ async def interact_job(interaction: discord.Interaction, view, job_id: str, butt
         await interaction.response.defer()
         
     elif button == "close_job_":
-      if interaction.user.id == claimer_id:
-        await interaction.response.send_message(f"<@{author_id}>'s task of {quantity} x {item} has been completed by {interaction.user.mention} for {reward}!")
+      if interaction.user.id == author_id:
+        if claimer_id is not None:
+            await interaction.response.send_message(f"{interaction.user.mention}'s task of {quantity} x {item} has been completed by <@{claimer_id}> for {reward}!")
+
         await delete_job(job_id)
         await interaction.message.delete()
         return
-      elif interaction.user.id == author_id:
-        if claimer_id is not None:
-            await interaction.response.send_message(f"{interaction.user.mention}'s task of {quantity} x {item} has been completed by <@{claimer_id}> for {reward}!")
-            
+      elif interaction.user.id == claimer_id:
+        await interaction.response.send_message(f"<@{author_id}>'s task of {quantity} x {item} has been completed by {interaction.user.mention} for {reward}!")
         await delete_job(job_id)
         await interaction.message.delete()
         return
