@@ -124,7 +124,9 @@ async def interact_job(interaction: discord.Interaction, view, job_id: str, butt
         await interaction.message.delete()
         return
       elif interaction.user.id == claimer_id:
-        await interaction.response.send_message(f"{interaction.user.mention}'s task of {quantity} x {item} has been completed by <@{claimer_id}> for {reward}!")
+        if claimer_id is not None:
+            await interaction.response.send_message(f"{interaction.user.mention}'s task of {quantity} x {item} has been completed by <@{claimer_id}> for {reward}!")
+            
         await delete_job(job_id)
         await interaction.message.delete()
         return
