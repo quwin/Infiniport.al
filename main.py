@@ -68,7 +68,7 @@ async def init_job_views(client: discord.Client):
   async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT job_id, time_limit FROM jobs') as cursor:
     jobs = await cursor.fetchall()
     
-  current_time = time.time()
+  current_time: int  = int(time.time())
   for row in jobs:
       client.add_view(JobView(row[0], min(1.0, current_time - row[1]), client))
     
