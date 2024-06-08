@@ -15,6 +15,7 @@ import aiosqlite
 import aiohttp
 import time
 from initalize_server import config_channel, firstMessageView
+from taskboard import taskboard_embed
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -197,7 +198,8 @@ tree.add_command(job_group)
 @app_commands.describe(page_number="Enter the page to go to")
 async def taskboard(interaction: discord.Interaction, page_number: int = 1):
   try:
-    embed = await fetch_unclaimed_jobs(interaction, page_number)
+    boolean = bool(interaction.guild)
+    embed = await taskboard_embed(interaction, min(1, page_number), boolean)
     await interaction.response.send_message(embed=embed, ephemeral=True)
   except Exception as e:
     if interaction.guild:

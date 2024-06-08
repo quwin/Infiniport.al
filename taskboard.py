@@ -46,12 +46,14 @@ class TaskboardView(discord.ui.View):
         except Exception as e:
             print(f"Failed to edit message on timeout: {str(e)}")
 
-async def taskboard_embed(interaction: discord.Interaction, page_number, type):
+async def taskboard_embed(interaction: discord.Interaction, page_number: int, type: bool):
     embed = discord.Embed(title='**Taskboard:**', color=0x00ff00)
 
     list = "----------------------------------------------------\n"
-    for job in await fetch_unclaimed_jobs(page_number):
-        job_id, author_id, item, quantity, reward, details, time_limit, _  = job
+    
+    unclaimed_jobs = await fetch_unclaimed_jobs(page_number, str(interaction.guild.id)) if type and interaction.guild else await fetch_unclaimed_jobs(page_number)
+    for job in unclaimed_jobs:
+        job_id, author_id, item, quantity, reward, details, time_limit, _, _, _, _  = job
         member = None
         if interaction.guild is not None:    
             member = interaction.guild.get_member(author_id)
@@ -61,7 +63,7 @@ async def taskboard_embed(interaction: discord.Interaction, page_number, type):
         if details != 'N/A':
             details = format_details_as_blockquote(details)
             list = list + f"> **Additional Info:** \n{details}\n"
-        list = list + f"> Expiration Time: <t:{int(time.time()+(float(time_limit)*3600.0))}:R>\n"
+        list = list + f"> Expiration Time: <t:{time_limit}:R>\n"
         list = list + '----------------------------------------------------\n'
         embed.add_field(name='', value=list, inline=False)
         list = ""

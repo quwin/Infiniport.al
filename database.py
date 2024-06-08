@@ -150,9 +150,16 @@ async def add_job(job_id, author_id, item, quantity, reward, details, time_limit
         await db.commit()
 
 async def fetch_unclaimed_jobs(page_number: int = 1, server: str | None = None):
-    async with aiosqlite.connect('jobs.db') as db, db.execute(
-        f'SELECT * FROM jobs WHERE claimer_id IS NULL LIMIT 4 OFFSET {4 * (page_number - 1)}') as cursor:
-        return await cursor.fetchall()
+    if server:
+        limit = 4
+        offset = 4 * (page_number - 1)
+        query = 'SELECT * FROM jobs WHERE claimer_id IS NULL AND server_id = ? LIMIT ? OFFSET ?'
+        async with aiosqlite.connect('jobs.db') as db, db.execute(query, (server, limit, offset)) as cursor:
+            return cursor.fetchall()
+    else:
+        async with aiosqlite.connect('jobs.db') as db, db.execute(
+            f'SELECT * FROM jobs WHERE claimer_id IS NULL LIMIT 4 OFFSET {4 * (page_number - 1)}') as cursor:
+            return await cursor.fetchall()
 
 async def fetch_linked_wallets(user_id):
     async with aiosqlite.connect('discord.db') as db, db.execute('SELECT * FROM discord_users WHERE user_id = ?', (user_id,)) as cursor:
