@@ -77,15 +77,8 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         details = self.children[3].value
         
         time_limit = self.children[4].value
-
-        try:
-            time_limit_int = int(time_limit)
-        except ValueError:
-            await interaction.response.send_message("Invalid input for time limit. Please enter a valid number.", ephemeral=True)
-            return
-            
         int_time: int = int(time.time())
-        expiration_int: int = time_limit_int * 3600
+        expiration_int: int = int(time_limit) * 3600
         expiration_date = str(int_time + expiration_int)
 
         if interaction.message:
@@ -95,8 +88,11 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         author_id = self.job_data.get("author_id", interaction.user.id)
         claimer_id = self.job_data.get("claimer_id", None)
         #Give View given timeout
-        new_view = await self.view.recreate_with_new_timeout(self.view.job_id, expiration_date, self.view.client)
-        await self.view.delete_view()
+        try:
+            new_view = await self.view.recreate_with_new_timeout(self.view.job_id, float(expiration_date), self.view.client)
+            await self.view.delete_view()
+        except Exception as e:
+            print(e)
         
         response = await create_or_edit_job(interaction, item, quantity, reward, details, expiration_date, new_view, interaction_id, claimer_id)
         message_id = self.job_data.get("message_id", response.id)
@@ -106,7 +102,6 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         server_id = self.job_data.get("server_id", default_server)
         
         await add_job(interaction_id, author_id, item, quantity, reward, details, expiration_date, channel_id, message_id, server_id, claimer_id)
-
     
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         print(f" Job update/create error: {error}")
