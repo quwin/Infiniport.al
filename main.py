@@ -180,7 +180,7 @@ job_group = app_commands.Group(name="task", description="View, modify, and creat
 # Create the subjobs
 @job_group.command(name="create", description="Create a claimable task!")
 async def create(interaction: discord.Interaction):
-  view = JobView(interaction.id, None, client)
+  view = JobView(interaction.id, 86400.0, client)
   await interaction.response.send_modal(JobInput(view))
 
 tree.add_command(job_group)
