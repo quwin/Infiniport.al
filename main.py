@@ -13,6 +13,7 @@ from job import JobView, show_unclaimed_jobs
 from collab_land import collab_channel, CollabButtons
 import aiosqlite
 import aiohttp
+import time
 from initalize_server import config_channel, firstMessageView
 
 intents = discord.Intents.default()
@@ -64,12 +65,13 @@ async def on_guild_join(guild: discord.Guild):
 
 
 async def init_job_views(client: discord.Client):
-  async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT job_id FROM jobs') as cursor:
+  async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT job_id, time_limit FROM jobs') as cursor:
     jobs = await cursor.fetchall()
-
-  for job_id in jobs:
-    client.add_view(JobView(job_id[0]))
-
+    
+  current_time = time.time()
+  for row in jobs:
+      client.add_view(JobView(row[0], min(1.0, current_time - row[1]), client))
+    
 @tree.command(name="clear_commands", description="Clear commands",
               guild=discord.Object(id=1234015429874417706))
 async def clear_commands(interaction, server: str | None = None):
@@ -178,7 +180,7 @@ job_group = app_commands.Group(name="task", description="View, modify, and creat
 # Create the subjobs
 @job_group.command(name="create", description="Create a claimable task!")
 async def create(interaction: discord.Interaction):
-  view = JobView(interaction.id)
+  view = JobView(interaction.id, None, client)
   await interaction.response.send_modal(JobInput(view))
 
 tree.add_command(job_group)

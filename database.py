@@ -34,6 +34,9 @@ async def init_db():
                 details TEXT,
                 time_limit REAL,
                 claimer_id INTEGER
+                message_id INTEGER
+                channel_id INTEGER
+                server_id INTEGER
             )
         ''')
         await jobs.commit()
@@ -84,20 +87,6 @@ async def update_skills(c, json, total_level, total_exp):
                skill_data['totalExp'], skill_data['exp']))
     
     print(f'User ID {json["_id"]} updated!')
-
-
-async def database_remove(user_id):
-  async with aiosqlite.connect('leaderboard.db') as conn:
-      c = await conn.cursor()
-      await c.execute("DELETE FROM total WHERE user_id = ?", (user_id,))
-      try:
-          for skill in SKILLS:
-              await c.execute(f"DELETE FROM {skill} WHERE user_id = ?", (user_id,))
-      except aiosqlite.Error as e:
-          print(f"An error occurred: {e}")
-      finally:
-          await conn.commit()
-          print(f"purged {user_id} from database")
 
 async def init_guild_db(server_id, guild_data):
     async with aiosqlite.connect('discord.db') as discord, aiosqlite.connect('leaderboard.db') as leaderboard: 
@@ -152,15 +141,15 @@ async def fetch_job(job_id):
         job = await cursor.fetchone()
         return job
 
-async def add_job(job_id, author_id, item, quantity, reward, details, time_limit, claimer_id=None):
+async def add_job(job_id, author_id, item, quantity, reward, details, time_limit, message_id, channel_id, server_id, claimer_id=None):
     async with aiosqlite.connect('jobs.db') as db:
         await db.execute('''
-            INSERT OR REPLACE INTO jobs (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id))
+            INSERT OR REPLACE INTO jobs (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id, message_id, channel_id, server_id))
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id, message_id, channel_id, server_id))
         await db.commit()
 
-async def fetch_unclaimed_jobs(page_number: int = 1):
+async def fetch_unclaimed_jobs(page_number: int = 1, server: str | None = None):
     async with aiosqlite.connect('jobs.db') as db, db.execute(
         f'SELECT * FROM jobs WHERE claimer_id IS NULL LIMIT 4 OFFSET {4 * (page_number - 1)}') as cursor:
         return await cursor.fetchall()

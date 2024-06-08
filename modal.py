@@ -5,6 +5,9 @@ from guild import assignguild
 from roles import linkRole
 from constants import RequirementType
 
+pixelshine = '<a:PIXELshine:1241404259774496878>'
+coin = '<:pixelcoin:1238636808951038092>'
+
 class JobInput(discord.ui.Modal, title='Input Task Details:'):
     def __init__(self, view, job_data = None):
         super().__init__()
@@ -17,8 +20,11 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
                 'quantity': job_data[3],
                 'reward': job_data[4],
                 'details': job_data[5],
-                'time_limit': int(job_data[6]),
+                'time_limit': job_data[6],
                 'claimer_id': job_data[7],
+                'message_id': job_data[8],
+                'channel_id': job_data[9],
+                'server_id': job_data[10]
             }
         else:
             self.job_data = {}
@@ -50,12 +56,16 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
             default= self.job_data.get('details', 'N/A'),
             max_length=256,
         ))
-
+        current_time = int(time.time())
+        #24 hrs from current time
+        expiration_date = self.job_data.get('time_limit', str(current_time + 86400))
+        # Solve for hrs from current time
+        input_hrs = str((int(expiration_date) - current_time)/3600)
         self.add_item(discord.ui.TextInput(
             label='When should this job expire? (In Hours)',
             style=discord.TextStyle.long,
             required=False,
-            default= self.job_data.get('time_limit', '24'),
+            default=input_hrs,
             max_length=3,
         ))
     
@@ -65,6 +75,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         reward = self.children[2].value
         details = self.children[3].value
         time_limit = self.children[4].value
+        expiration_date = str(int(time.time()+(float(time_limit)*3600.0)))
 
         if interaction.message:
             await interaction.message.delete()
@@ -73,9 +84,16 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         author_id = self.job_data.get("author_id", interaction.user.id)
         claimer_id = self.job_data.get("claimer_id", None)
 
-        await create_or_edit_job(interaction, item, quantity, reward, details, time_limit, self.view, interaction_id, claimer_id)
-        await add_job(interaction_id, author_id, item, quantity, reward, details, time_limit, claimer_id)
+        response = await create_or_edit_job(interaction, item, quantity, reward, details, expiration_date, self.view, interaction_id, claimer_id)
+        message_id = self.job_data.get("message_id", response.id)
+        channel_id = self.job_data.get("channel_id", response.channel.id)
+
+        default_server = interaction.guild.id if interaction.guild else None
+        server_id = self.job_data.get("server_id", default_server)
         
+        await add_job(interaction_id, author_id, item, quantity, reward, details, expiration_date, channel_id, message_id, server_id, claimer_id)
+
+    
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         print(f" Job update/create error: {error}")
         await interaction.followup.send(f"Failed to create/update the job: {error}", ephemeral=True)
@@ -85,6 +103,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
 async def create_or_edit_job(interaction: discord.Interaction, item, quantity, reward, details, time_limit, view, job_id=None,  claimer_id=None):
     embed = embed_job(interaction.user, item, quantity, reward, details, time_limit, claimer_id)
     await interaction.response.send_message(embed=embed, view=view)
+    return await interaction.original_response()
 
 
 def embed_job(author,
@@ -94,8 +113,6 @@ def embed_job(author,
     details,
     time_limit,
     claimer=None):
-    pixelshine = '<a:PIXELshine:1241404259774496878>'
-    coin = '<:pixelcoin:1238636808951038092>'
     
     embed = discord.Embed(
     title=
@@ -112,7 +129,7 @@ def embed_job(author,
       inline=False)
     
     embed.add_field(name="Expiration Time:",
-      value=f"<t:{int(time.time()+(float(time_limit)*3600.0))}:R>",
+      value=f"<t:{time_limit}:R>",
       inline=False)
     
     if claimer:

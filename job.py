@@ -5,25 +5,25 @@ from constants import SKILLS
 from database import fetch_job, delete_job, update_job_claimer, add_job, fetch_unclaimed_jobs
 from modal import JobInput, embed_job
 
+pixelshine = '<a:PIXELshine:1241404259774496878>'
+coin = '<:pixelcoin:1238636808951038092>'
+
 class JobView(discord.ui.View):
-    def __init__(self, job_id):
-        super().__init__(timeout=None)
+    def __init__(self, job_id, timeout, client: discord.Client):
+        super().__init__(timeout=timeout)
+        self.client = client
         self.job_id = job_id
         self.last_bumped = time.time() - 300
 
+        # Get job expiry data + expire it at that time
+
         # Each button needs to create in __init__() because of how the custom_id 
         # is required to be in the same scope as job_id
-        self.claim_button = discord.ui.Button(label="Claim", style=discord.ButtonStyle.green, custom_id=f'claim_{job_id}')
-        self.unclaim_button = discord.ui.Button(label="Unclaim", style=discord.ButtonStyle.red, custom_id=f'unclaim_{job_id}')
-        self.close_job_button = discord.ui.Button(label="Close", style=discord.ButtonStyle.blurple, custom_id=f'close_job_{job_id}')
-        self.bump_button = discord.ui.Button(label="Bump Task", 
-                                            style=discord.ButtonStyle.gray, 
-                                            custom_id=f'bump_{job_id}',
-                                            row=1)
-        self.edit_button = discord.ui.Button(label="Edit Task", 
-                                            style=discord.ButtonStyle.gray, 
-                                            custom_id=f'edit_{job_id}',
-                                            row=1)
+        self.claim_button = discord.ui.Button(label="Claim", style=discord.ButtonStyle.green)
+        self.unclaim_button = discord.ui.Button(label="Unclaim", style=discord.ButtonStyle.red)
+        self.close_job_button = discord.ui.Button(label="Close", style=discord.ButtonStyle.blurple)
+        self.bump_button = discord.ui.Button(label="Bump Task", style=discord.ButtonStyle.gray, row=1)
+        self.edit_button = discord.ui.Button(label="Edit Task", style=discord.ButtonStyle.gray, row=1)
 
         self.claim_button.callback = self.claim_button_callback
         self.unclaim_button.callback = self.unclaim_button_callback
@@ -92,9 +92,31 @@ class JobView(discord.ui.View):
         except Exception as e:
             await job_error(e, interaction)
 
+    async def on_timeout(self):
+        try:
+            job_data = await fetch_job(self.job_id)
+            if job_data:
+                message_id = job_data[8]
+                channel_id = job_data[9]
+                server_id = job_data[10]
+                if message_id and channel_id and server_id:
+                    guild = self.client.get_guild(int(server_id))
+                    if guild:
+                        channel = guild.get_channel(int(channel_id))
+                        if channel and channel.type == discord.ChannelType.text:
+                            message = await channel.fetch_message(int(message_id))
+                            if message:
+                                await message.delete()
+                                print(f"Auto deleted task {self.job_id}")
+                                
+        except Exception as e:
+            print(e)
+            await job_error(e, None)
 
-async def job_error(error, interaction: discord.Interaction):
-    await interaction.followup.send(f"An error occurred while processing your request: {error} \nMake sure that Infiniportal has the required permissions for viewing and interacting with this channel!", ephemeral=True)
+
+async def job_error(error, interaction: discord.Interaction | None):
+    if interaction:
+        await interaction.followup.send(f"An error occurred while processing your request: {error} \nMake sure that Infiniportal has the required permissions for viewing and interacting with this channel!", ephemeral=True)
 
 async def interact_job(interaction: discord.Interaction, view, job_id: str, button: str):
   job = await fetch_job(job_id)
@@ -137,46 +159,4 @@ async def interact_job(interaction: discord.Interaction, view, job_id: str, butt
         await interaction.response.defer()
 
     embed = embed_job(author, item, quantity, reward, details, time_limit, claimer_id)
-    await interaction.message.edit(embed=embed, view=view)
-
-async def create_job(interaction: discord.Interaction, item, quantity, reward, details, time_limit):
-    job_id = str(interaction.id)
-    await add_job(job_id, interaction.user.id, item, quantity, reward, details, time_limit, None)
-    
-    embed = embed_job(interaction.user, item, quantity, reward, details, time_limit, None)
-    await interaction.response.send_message(embed=embed, view=JobView(job_id))
-    return job_id
-
-async def show_unclaimed_jobs(interaction: discord.Interaction, page_number):
-    embed = discord.Embed(title='**Taskboard:**', color=0x00ff00)
-    
-    list = "----------------------------------------------------\n"
-    for job in await fetch_unclaimed_jobs(page_number):
-        job_id, author_id, item, quantity, reward, details, time_limit, _  = job
-        member = None
-        if interaction.guild is not None:    
-            member = interaction.guild.get_member(author_id)
-        author = await interaction.client.fetch_user(author_id) if member is None else member
-        list = list + f"**Requested by** <@{author.id}>\n\n"
-        list = list + f"> **{quantity}** x {item} **---->** {reward}\n"
-        if details != 'N/A':
-            details = format_details_as_blockquote(details)
-            list = list + f"> **Additional Info:** \n{details}\n"
-        list = list + f"> Expiration Time: <t:{int(time.time()+(float(time_limit)*3600.0))}:R>\n"
-        list = list + '----------------------------------------------------\n'
-        embed.add_field(name='', value=list, inline=False)
-        list = ""
-        
-    embed.add_field(name='', value="\n Create your own task using `/task create`", inline=False)
-
-    return embed
-
-# Helper function for /taskboard
-def format_details_as_blockquote(details: str) -> str:
-    lines = details.split('\n')
-    formatted_lines = [f"> {line}" for line in lines]
-    return '\n'.join(formatted_lines)
-
-#async def post_board(interaction: discord.Interaction):
-
-
+    await interaction.message.edit(embed=embed, view=view)]
