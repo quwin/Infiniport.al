@@ -56,11 +56,12 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
             default= self.job_data.get('details', 'N/A'),
             max_length=256,
         ))
-        current_time = int(time.time())
+        current_time: int = int(time.time())
         #24 hrs from current time
-        expiration_date = self.job_data.get('time_limit', str(current_time + 86400))
+        expiration_date: str = self.job_data.get('time_limit', str(current_time + 86400))
         # Solve for hrs from current time
-        input_hrs = str(int((int(expiration_date) - current_time)/3600))
+        time_delta: int = int(expiration_date) - current_time
+        input_hrs: str = str(int(time_delta/3600))
         self.add_item(discord.ui.TextInput(
             label='When should this job expire? (In Hours)',
             style=discord.TextStyle.long,
@@ -75,7 +76,9 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         reward = self.children[2].value
         details = self.children[3].value
         time_limit = self.children[4].value
-        expiration_date = str(int(time.time()+(float(time_limit)*3600.0)))
+        int_time: int = int(time.time())
+        expiration_int: int = int(time_limit)*3600
+        expiration_date = str(int_time+expiration_int)
 
         if interaction.message:
             await interaction.message.delete()

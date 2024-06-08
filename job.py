@@ -10,7 +10,7 @@ coin = '<:pixelcoin:1238636808951038092>'
 
 class JobView(discord.ui.View):
     def __init__(self, job_id, timeout, client: discord.Client):
-        super().__init__(timeout=timeout)
+        super().__init__(timeout=timeout if timeout else 86400.0) #redundancy to ensure timeout defaults to 24hrs
         self.client = client
         self.job_id = job_id
         self.last_bumped = time.time() - 300
