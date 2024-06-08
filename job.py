@@ -19,11 +19,11 @@ class JobView(discord.ui.View):
 
         # Each button needs to create in __init__() because of how the custom_id 
         # is required to be in the same scope as job_id
-        self.claim_button = discord.ui.Button(label="Claim", style=discord.ButtonStyle.green)
-        self.unclaim_button = discord.ui.Button(label="Unclaim", style=discord.ButtonStyle.red)
-        self.close_job_button = discord.ui.Button(label="Close", style=discord.ButtonStyle.blurple)
-        self.bump_button = discord.ui.Button(label="Bump Task", style=discord.ButtonStyle.gray, row=1)
-        self.edit_button = discord.ui.Button(label="Edit Task", style=discord.ButtonStyle.gray, row=1)
+        self.claim_button = discord.ui.Button(label="Claim", style=discord.ButtonStyle.green, custom_id=f"claim_{job_id}")
+        self.unclaim_button = discord.ui.Button(label="Unclaim", style=discord.ButtonStyle.red, custom_id=f"unclaim_{job_id}")
+        self.close_job_button = discord.ui.Button(label="Close", style=discord.ButtonStyle.blurple, custom_id=f"close_{job_id}")
+        self.bump_button = discord.ui.Button(label="Bump Task", style=discord.ButtonStyle.gray, row=1, custom_id=f"bump_{job_id}")
+        self.edit_button = discord.ui.Button(label="Edit Task", style=discord.ButtonStyle.gray, row=1, custom_id=f"edit_{job_id}")
 
         self.claim_button.callback = self.claim_button_callback
         self.unclaim_button.callback = self.unclaim_button_callback
@@ -113,6 +113,10 @@ class JobView(discord.ui.View):
             print(e)
             await job_error(e, None)
 
+    @classmethod
+    async def recreate_with_new_timeout(cls, job_id, timeout, client):
+        new_view = JobView(job_id, timeout, client)
+        return new_view
 
 async def job_error(error, interaction: discord.Interaction | None):
     if interaction:
