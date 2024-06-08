@@ -144,7 +144,7 @@ async def fetch_job(job_id):
 async def add_job(job_id, author_id, item, quantity, reward, details, time_limit, message_id, channel_id, server_id, claimer_id=None):
     async with aiosqlite.connect('jobs.db') as db:
         await db.execute('''
-            INSERT OR REPLACE INTO jobs (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id, message_id, channel_id, server_id))
+            INSERT OR REPLACE INTO jobs (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id, message_id, channel_id, server_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (job_id, author_id, item, quantity, reward, details, time_limit, claimer_id, message_id, channel_id, server_id))
         await db.commit()

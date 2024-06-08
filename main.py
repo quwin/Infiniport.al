@@ -70,7 +70,13 @@ async def init_job_views(client: discord.Client):
     
   current_time: int  = int(time.time())
   for row in jobs:
-      client.add_view(JobView(row[0], min(1.0, current_time - row[1]), client))
+      print(row, '\n')
+      if row and row[0] and row[1]:
+        client.add_view(JobView(row[0], min(1.0, current_time - row[1]), client))
+      elif row and row[0]:
+        client.add_view(JobView(row[0], 1.0, client))
+      else:
+        print("Error: No job ID or time limit found in jobs.db")
     
 @tree.command(name="clear_commands", description="Clear commands",
               guild=discord.Object(id=1234015429874417706))
