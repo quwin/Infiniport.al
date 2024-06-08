@@ -155,7 +155,7 @@ async def fetch_unclaimed_jobs(page_number: int = 1, server: str | None = None):
         offset = 4 * (page_number - 1)
         query = 'SELECT * FROM jobs WHERE claimer_id IS NULL AND server_id = ? LIMIT ? OFFSET ?'
         async with aiosqlite.connect('jobs.db') as db, db.execute(query, (server, limit, offset)) as cursor:
-            return cursor.fetchall()
+            return await cursor.fetchall()
     else:
         async with aiosqlite.connect('jobs.db') as db, db.execute(
             f'SELECT * FROM jobs WHERE claimer_id IS NULL LIMIT 4 OFFSET {4 * (page_number - 1)}') as cursor:
