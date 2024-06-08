@@ -84,9 +84,10 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         author_id = self.job_data.get("author_id", interaction.user.id)
         claimer_id = self.job_data.get("claimer_id", None)
         #Give View given timeout
-        await self.view.recreate_with_new_timeout(self.view.job_id, expiration_date, self.view.client)
-        self.view.timeout = float(time_limit)*3600.0
-        response = await create_or_edit_job(interaction, item, quantity, reward, details, expiration_date, self.view, interaction_id, claimer_id)
+        new_view = await self.view.recreate_with_new_timeout(self.view.job_id, expiration_date, self.view.client)
+        await self.view.delete_view()
+        
+        response = await create_or_edit_job(interaction, item, quantity, reward, details, expiration_date, new_view, interaction_id, claimer_id)
         message_id = self.job_data.get("message_id", response.id)
         channel_id = self.job_data.get("channel_id", response.channel.id)
 

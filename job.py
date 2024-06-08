@@ -118,6 +118,10 @@ class JobView(discord.ui.View):
         new_view = JobView(job_id, timeout, client)
         return new_view
 
+    async def delete_view(self):
+        # Stop the view to ensure it's no longer active
+        self.stop()
+
 async def job_error(error, interaction: discord.Interaction | None):
     if interaction:
         await interaction.followup.send(f"An error occurred while processing your request: {error} \nMake sure that Infiniportal has the required permissions for viewing and interacting with this channel!", ephemeral=True)

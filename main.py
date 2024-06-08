@@ -100,9 +100,9 @@ async def add_commands(interaction, server: str | None = None):
 
 @tree.command(name="raw_sql", description="break da database",
    guild=discord.Object(id=1234015429874417706))
-async def raw_sql(interaction, execute: str):
+async def raw_sql(interaction, database: str, execute: str):
   await interaction.response.defer()
-  async with aiosqlite.connect('discord.db') as db:
+  async with aiosqlite.connect(f'{database}.db') as db:
     await db.execute(execute)
     await db.commit()
   await interaction.followup.send(f'Executed command {execute}!')
