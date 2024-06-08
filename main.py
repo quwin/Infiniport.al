@@ -4,12 +4,12 @@ from discord import reaction
 from discord.ext import commands, tasks
 from discord import app_commands
 from profile_utils import lookup_profile, embed_profile
-from database import init_db
+from database import init_db, fetch_unclaimed_jobs
 from leaderboard import manage_leaderboard
 from constants import TOKEN, SkillEnum, SortEnum
 from land import speck_data, nft_land_data
 from modal import JobInput
-from job import JobView, show_unclaimed_jobs
+from job import JobView
 from collab_land import collab_channel, CollabButtons
 import aiosqlite
 import aiohttp
@@ -29,9 +29,9 @@ tree = app_commands.CommandTree(client)
 @client.event
 async def on_ready():
   try:
+    await init_db()
     await tree.sync(guild=discord.Object(id=1234015429874417706))
     print(f'We have logged in as {client.application_id}')
-    await init_db()
   except Exception as e:
     print(f"Error: {e}")
     
@@ -191,7 +191,7 @@ tree.add_command(job_group)
 @app_commands.describe(page_number="Enter the page to go to")
 async def taskboard(interaction: discord.Interaction, page_number: int = 1):
   try:
-    embed = await show_unclaimed_jobs(interaction, page_number)
+    embed = await fetch_unclaimed_jobs(interaction, page_number)
     await interaction.response.send_message(embed=embed, ephemeral=True)
   except Exception as e:
     if interaction.guild:

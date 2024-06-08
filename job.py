@@ -159,4 +159,4 @@ async def interact_job(interaction: discord.Interaction, view, job_id: str, butt
         await interaction.response.defer()
 
     embed = embed_job(author, item, quantity, reward, details, time_limit, claimer_id)
-    await interaction.message.edit(embed=embed, view=view)]
+    await interaction.message.edit(embed=embed, view=view)
