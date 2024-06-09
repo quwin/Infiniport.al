@@ -20,7 +20,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
                 'quantity': job_data[3],
                 'reward': job_data[4],
                 'details': job_data[5],
-                'time_limit': job_data[6],
+                'time_limit': float(job_data[6]),
                 'claimer_id': job_data[7],
                 'message_id': job_data[8],
                 'channel_id': job_data[9],
@@ -58,7 +58,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         ))
         current_time: float = time.time()
         #24 hrs from current time
-        expiration_date: float = self.job_data.get('time_limit', str(current_time + 86400.0))
+        expiration_date: float = self.job_data.get('time_limit', current_time + 86400.0)
         # Solve for hrs from current time
         time_delta: float = expiration_date - current_time
         input_hrs: str = str(time_delta/3600.0)

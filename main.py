@@ -71,7 +71,7 @@ async def init_job_views(client: discord.Client):
     
   current_time: float  = time.time()
   for row in jobs:
-      expiration_date = row[1]
+      expiration_date = float(row[1])
       if current_time >= expiration_date:
         view_lifetime = expiration_date - current_time
         try:
