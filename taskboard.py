@@ -63,7 +63,7 @@ async def taskboard_embed(interaction: discord.Interaction, page_number: int, ty
         if details != 'N/A':
             details = format_details_as_blockquote(details)
             list = list + f"> **Additional Info:** \n{details}\n"
-        list = list + f"> Expiration Time: <t:{time_limit}:R>\n"
+        list = list + f"> Expiration Time: <t:{int(time_limit)}:R>\n"
         list = list + '----------------------------------------------------\n'
         embed.add_field(name='', value=list, inline=False)
         list = ""

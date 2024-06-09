@@ -11,10 +11,8 @@ coin = '<:pixelcoin:1238636808951038092>'
 
 class JobView(discord.ui.View):
 
-    def __init__(self, job_id, timeout, client: discord.Client):
-        super().__init__(
-            timeout=timeout if timeout else
-            86400.0)  #redundancy to ensure timeout defaults to 24hrs
+    def __init__(self, job_id, client: discord.Client, timeout = None):
+        super().__init__(timeout=timeout)
         self.client = client
         self.job_id = job_id
         self.last_bumped = time.time() - 300
@@ -115,26 +113,7 @@ class JobView(discord.ui.View):
             await job_error(e, interaction)
 
     async def on_timeout(self):
-        try:
-            job_data = await fetch_job(self.job_id)
-            if job_data:
-                message_id = job_data[8]
-                channel_id = job_data[9]
-                server_id = job_data[10]
-                if message_id and channel_id and server_id:
-                    guild = self.client.get_guild(int(server_id))
-                    if guild:
-                        channel = guild.get_channel(int(channel_id))
-                        if channel and channel.type == discord.ChannelType.text:
-                            message = await channel.fetch_message(
-                                int(message_id))
-                            if message:
-                                await message.delete()
-                                print(f"Auto deleted task {self.job_id}")
-
-        except Exception as e:
-            print(e)
-            await job_error(e, None)
+        await delete_job_message(self.job_id, self.client)
 
     @classmethod
     async def recreate_with_new_timeout(cls, job_id, timeout, client):
@@ -203,3 +182,33 @@ async def interact_job(interaction: discord.Interaction, view, job_id: str,
                           claimer_id)
         await interaction.message.edit(embed=embed, view=view)
 
+async def delete_job_message(job_id, client):
+    try:
+        job_data = await fetch_job(job_id)
+        if job_data:
+            message_id = job_data[8]
+            channel_id = job_data[9]
+            server_id = job_data[10]
+            if message_id and channel_id and server_id:
+                guild = client.get_guild(int(server_id))
+                if guild:
+                    channel = guild.get_channel(int(channel_id))
+                    if channel and channel.type == discord.ChannelType.text:
+                        message = await channel.fetch_message(
+                            int(message_id))
+                        if message:
+                            await message.delete()
+                            print(f"Auto deleted task {job_id}")
+    
+    except Exception as e:
+        print(e)
+        await job_error(e, None)
+
+async def readd_job_view(client, view_lifetime, message_id, channel_id, server_id):
+    guild = client.get_guild(int(server_id))
+    if guild:
+        channel = guild.get_channel(int(channel_id))
+        if channel and channel.type == discord.ChannelType.text:
+            message = await channel.fetch_message(int(message_id))
+            if message:
+                message.edit(embed=message.embed, view=JobView(message.id, view_lifetime, client))

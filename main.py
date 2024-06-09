@@ -9,7 +9,7 @@ from leaderboard import manage_leaderboard
 from constants import TOKEN, SkillEnum, SortEnum
 from land import speck_data, nft_land_data
 from modal import JobInput
-from job import JobView
+from job import JobView, delete_job_message, readd_job_view
 from collab_land import collab_channel, CollabButtons
 import aiosqlite
 import aiohttp
@@ -66,18 +66,27 @@ async def on_guild_join(guild: discord.Guild):
 
 
 async def init_job_views(client: discord.Client):
-  async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT job_id, time_limit FROM jobs') as cursor:
+  async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT job_id, time_limit, message_id, channel_id, server_id FROM jobs') as cursor:
     jobs = await cursor.fetchall()
     
-  current_time: int  = int(time.time())
+  current_time: float  = time.time()
   for row in jobs:
-      print(row, '\n')
-      if row and row[0] and row[1]:
-        client.add_view(JobView(row[0], min(1.0, current_time - row[1]), client))
-      elif row and row[0]:
-        client.add_view(JobView(row[0], 1.0, client))
+      expiration_date = row[1]
+      if current_time >= expiration_date:
+        view_lifetime = expiration_date - current_time
+        try:
+          message_id = row[2]
+          channel_id = row[3]
+          server_id = row[4]
+          await readd_job_view(client, view_lifetime, message_id, channel_id, server_id)
+        except Exception as e:
+          print(f'Job view add on init error: {e}')
       else:
-        print("Error: No job ID or time limit found in jobs.db")
+        job_id = row[0]
+        try:
+          await delete_job_message(job_id, client)
+        except Exception as e:
+          print(f'Job delete on init error: {e}')
     
 @tree.command(name="clear_commands", description="Clear commands",
               guild=discord.Object(id=1234015429874417706))
@@ -187,7 +196,7 @@ job_group = app_commands.Group(name="task", description="View, modify, and creat
 # Create the subjobs
 @job_group.command(name="create", description="Create a claimable task!")
 async def create(interaction: discord.Interaction):
-  view = JobView(interaction.id, 86400.0, client)
+  view = JobView(interaction.id, client)
   await interaction.response.send_modal(JobInput(view))
 
 tree.add_command(job_group)

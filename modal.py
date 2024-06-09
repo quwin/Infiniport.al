@@ -56,18 +56,18 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
             default= self.job_data.get('details', 'N/A'),
             max_length=256,
         ))
-        current_time: int = int(time.time())
+        current_time: float = time.time()
         #24 hrs from current time
-        expiration_date: str = self.job_data.get('time_limit', str(current_time + 86400))
+        expiration_date: float = self.job_data.get('time_limit', str(current_time + 86400.0))
         # Solve for hrs from current time
-        time_delta: int = int(expiration_date) - current_time
-        input_hrs: str = str(int(time_delta/3600))
+        time_delta: float = expiration_date - current_time
+        input_hrs: str = str(time_delta/3600.0)
         self.add_item(discord.ui.TextInput(
             label='When should this job expire? (In Hours)',
             style=discord.TextStyle.long,
             required=False,
             default=input_hrs,
-            max_length=3,
+            max_length=5,
         ))
     
     async def on_submit(self, interaction: discord.Interaction):
@@ -78,13 +78,11 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         time_limit = self.children[4].value
         # conversions 
         try:
-            time_limit_int = int(time_limit)
+            time_limit_float = float(time_limit)
         except ValueError:
             await interaction.response.send_message("Invalid input for time limit. Please enter a valid number.", ephemeral=True)
             return
-        int_time: int = int(time.time())
-        expiration_int: int = time_limit_int * 3600
-        expiration_date: int = int_time + expiration_int
+        expiration_date: float = (time_limit_float * 3600.0) + time.time()
 
         if interaction.message:
             await interaction.message.delete()
@@ -95,20 +93,20 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
             
          #Give View given timeout
         try:
-            new_view = await self.view.recreate_with_new_timeout(self.view.job_id, float(expiration_date), self.view.client)
+            new_view = await self.view.recreate_with_new_timeout(self.view.job_id, expiration_date, self.view.client)
             await self.view.delete_view()
         except Exception as e:
             new_view = self
             print(e)
-        
-        response = await create_or_edit_job(interaction, item, quantity, reward, details, expiration_date, new_view, interaction_id, claimer_id)
-        message_id = self.job_data.get("message_id", response.id)
-        channel_id = self.job_data.get("channel_id", response.channel.id)
-
-        default_server = interaction.guild.id if interaction.guild else None
-        server_id = self.job_data.get("server_id", default_server)
 
         try:
+            response = await create_or_edit_job(interaction, item, quantity, reward, details, expiration_date, new_view, interaction_id, claimer_id)
+            message_id = self.job_data.get("message_id", response.id)
+            channel_id = self.job_data.get("channel_id", response.channel.id)
+    
+            default_server = interaction.guild.id if interaction.guild else None
+            server_id = self.job_data.get("server_id", default_server)
+
             await add_job(interaction_id, author_id, item, quantity, reward, details, expiration_date, channel_id, message_id, server_id, claimer_id)
         except Exception as e:
             print(e)
@@ -148,7 +146,7 @@ def embed_job(author,
       inline=False)
     
     embed.add_field(name="Expiration Time:",
-      value=f"<t:{time_limit}:R>",
+      value=f"<t:{int(time_limit)}:R>",
       inline=False)
     
     if claimer:
