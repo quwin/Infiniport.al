@@ -78,12 +78,11 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         time_limit = self.children[4].value
         # conversions 
         try:
-            time_limit_float = float(time_limit)
+            expiration_date: float = (float(time_limit) * 3600.0) + time.time()
         except ValueError:
             await interaction.response.send_message("Invalid input for time limit. Please enter a valid number.", ephemeral=True)
             return
-        expiration_date: float = (time_limit_float * 3600.0) + time.time()
-
+        
         if interaction.message:
             await interaction.message.delete()
 
