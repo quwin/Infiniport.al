@@ -125,6 +125,15 @@ async def update_job_claimer(job_id, claimer_id):
         ''', (claimer_id, job_id))
         await db.commit()
 
+async def update_job_message(job_id, message_id):
+    async with aiosqlite.connect('jobs.db') as db:
+        await db.execute('''
+            UPDATE jobs
+            SET message_id = ?
+            WHERE job_id = ?
+        ''', (message_id, job_id))
+        await db.commit()
+
 async def delete_job(job_id):
     try:
         async with aiosqlite.connect('jobs.db') as db:

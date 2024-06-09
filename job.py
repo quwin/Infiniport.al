@@ -2,7 +2,7 @@ import asyncio
 import discord
 import time
 from constants import SKILLS
-from database import fetch_job, delete_job, update_job_claimer, add_job, fetch_unclaimed_jobs
+from database import fetch_job, delete_job, update_job_claimer, add_job, update_job_message
 from modal import JobInput, embed_job
 
 pixelshine = '<a:PIXELshine:1241404259774496878>'
@@ -107,8 +107,13 @@ class JobView(discord.ui.View):
                     0] if original_message.embeds else None
                 await original_message.delete()
                 if embed:
-                    await interaction.response.send_message(embed=embed,
-                                                            view=self)
+                    await interaction.response.send_message(embed=embed, view=self)
+                    
+                    sent_message = await interaction.original_response()
+                    message_id = sent_message.id
+                    await update_job_message(self.job_id, message_id)
+
+        
         except Exception as e:
             await job_error(e, interaction)
 

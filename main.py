@@ -4,7 +4,7 @@ from discord import reaction
 from discord.ext import commands, tasks
 from discord import app_commands
 from profile_utils import lookup_profile, embed_profile
-from database import init_db, fetch_unclaimed_jobs
+from database import init_db, delete_job
 from leaderboard import manage_leaderboard
 from constants import TOKEN, SkillEnum, SortEnum
 from land import speck_data, nft_land_data
@@ -81,13 +81,14 @@ async def init_job_views(client: discord.Client):
           server_id = row[4]
           await readd_job_view(client, view_lifetime, message_id, channel_id, server_id)
         except Exception as e:
-          print(f'Job view add on init error: {e}')
+          print(f'Job view add on init error: {e},\n{row}')
       else:
         job_id = row[0]
         try:
+          await delete_job(job_id)
           await delete_job_message(job_id, client)
         except Exception as e:
-          print(f'Job delete on init error: {e}')
+          print(f'Job delete on init error: {e},\n{row}')
     
 @tree.command(name="clear_commands", description="Clear commands",
               guild=discord.Object(id=1234015429874417706))
