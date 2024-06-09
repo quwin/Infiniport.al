@@ -117,7 +117,7 @@ class JobView(discord.ui.View):
 
     @classmethod
     async def recreate_with_new_timeout(cls, job_id, timeout, client):
-        new_view = JobView(job_id, timeout, client)
+        new_view = JobView(job_id, client, timeout)
         return new_view
 
     async def delete_view(self):

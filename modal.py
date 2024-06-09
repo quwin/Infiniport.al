@@ -92,11 +92,13 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
             
          #Give View given timeout
         try:
-            new_view = await self.view.recreate_with_new_timeout(self.view.job_id, expiration_date, self.view.client)
+            new_view = await self.view.recreate_with_new_timeout(self.view.job_id, float(time_limit)*3600.0, self.view.client)
             await self.view.delete_view()
         except Exception as e:
             new_view = self
-            print(e)
+            print(f" Recreate View error: {e}")
+            await interaction.response.send_message("Error, could not complete the Task creation. Please Try Again.", ephemeral=True)
+            return
 
         try:
             response = await create_or_edit_job(interaction, item, quantity, reward, details, expiration_date, new_view, interaction_id, claimer_id)
@@ -108,7 +110,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
 
             await add_job(interaction_id, author_id, item, quantity, reward, details, expiration_date, channel_id, message_id, server_id, claimer_id)
         except Exception as e:
-            print(e)
+            print(f' Add_job error: {e}')
     
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
         print(f" Job update/create error: {error}")
