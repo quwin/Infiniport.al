@@ -213,7 +213,17 @@ async def readd_job_view(client: discord.Client, view_lifetime: float, message_i
     guild = client.get_guild(int(server_id))
     print(guild)
     if guild:
-        channel = client.get_channel(int(channel_id))
+        required_permissions = discord.Permissions(
+            view_channel=True,
+            read_messages=True,
+            send_messages=True,
+            manage_messages=True,
+            embed_links=True
+        )
+        me = guild.me
+        if not me.guild_permissions.is_superset(required_permissions):
+            print("Bot does not have the required permissions in the guild.")
+        channel = guild.get_channel(int(channel_id))
         print(channel)
         if channel and channel.type == discord.ChannelType.text:
             message: discord.Message = await channel.fetch_message(int(message_id))
