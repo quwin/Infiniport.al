@@ -119,6 +119,7 @@ class JobView(discord.ui.View):
 
     async def on_timeout(self):
         await delete_job_message(self.job_id, self.client)
+        await delete_job(self.job_id)
 
     @classmethod
     async def recreate_with_new_timeout(cls, job_id, timeout, client):
@@ -194,16 +195,16 @@ async def delete_job_message(job_id, client):
             message_id = job_data[8]
             channel_id = job_data[9]
             server_id = job_data[10]
-            if message_id and channel_id and server_id:
-                guild = client.get_guild(int(server_id))
-                if guild:
-                    channel = guild.get_channel(int(channel_id))
-                    if channel and channel.type == discord.ChannelType.text:
-                        message = await channel.fetch_message(
-                            int(message_id))
-                        if message:
-                            await message.delete()
-                            print(f"Auto deleted task {job_id}")
+            print(message_id, channel_id, server_id)
+            guild = client.get_guild(int(server_id))
+            if guild:
+                channel = guild.get_channel(int(channel_id))
+                if channel and channel.type == discord.ChannelType.text:
+                    message: discord.Message = await channel.fetch_message(int(message_id))
+                    if message:
+                        await message.delete()
+                        print(f"Auto deleted task {job_id}")
+            
     
     except Exception as e:
         print(e)
