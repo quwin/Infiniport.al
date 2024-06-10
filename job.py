@@ -213,7 +213,7 @@ async def readd_job_view(client: discord.Client, view_lifetime: float, message_i
     guild = client.get_guild(int(server_id))
     print(guild)
     if guild:
-        channel = guild.get_channel(int(channel_id))
+        channel = client.get_channel(int(channel_id))
         print(channel)
         if channel and channel.type == discord.ChannelType.text:
             message: discord.Message = await channel.fetch_message(int(message_id))
