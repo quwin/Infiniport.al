@@ -108,7 +108,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
             default_server = interaction.guild.id if interaction.guild else None
             server_id = self.job_data.get("server_id", default_server)
 
-            await add_job(interaction_id, author_id, item, quantity, reward, details, expiration_date, channel_id, message_id, server_id, claimer_id)
+            await add_job(interaction_id, author_id, item, quantity, reward, details, expiration_date, message_id, channel_id, server_id, claimer_id)
         except Exception as e:
             print(f' Add_job error: {e}')
     
