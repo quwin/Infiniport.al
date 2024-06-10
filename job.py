@@ -211,9 +211,13 @@ async def delete_job_message(job_id, client):
 
 async def readd_job_view(client: discord.Client, view_lifetime: float, message_id: str, channel_id: str, server_id: str):
     guild = client.get_guild(int(server_id))
+    print(guild)
     if guild:
         channel = guild.get_channel(int(channel_id))
+        print(channel)
         if channel and channel.type == discord.ChannelType.text:
             message: discord.Message = await channel.fetch_message(int(message_id))
+            print(message)
             if message.embeds:
                 await message.edit(embed=message.embeds[0], view=JobView(message.id, client, view_lifetime))
+                print('\n')
