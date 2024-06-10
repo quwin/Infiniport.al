@@ -209,9 +209,8 @@ async def delete_job_message(job_id, client):
         print(e)
         await job_error(e, None)
 
-async def readd_job_view(client: discord.Client, view_lifetime: float, message_id: str, channel_id: str, server_id: str):
+async def readd_job_view(client: discord.Client, job_id, view_lifetime: float, message_id: str, channel_id: str, server_id: str):
     guild = client.get_guild(int(server_id))
-    print(guild)
     if guild:
         required_permissions = discord.Permissions(
             view_channel=True,
@@ -224,10 +223,8 @@ async def readd_job_view(client: discord.Client, view_lifetime: float, message_i
         if not me.guild_permissions.is_superset(required_permissions):
             print("Bot does not have the required permissions in the guild.")
         channel = guild.get_channel(int(channel_id))
-        print(channel)
         if channel and channel.type == discord.ChannelType.text:
             message: discord.Message = await channel.fetch_message(int(message_id))
-            print(message)
             if message.embeds:
-                await message.edit(embed=message.embeds[0], view=JobView(message.id, client, view_lifetime))
-                print('\n')
+                await message.edit(embed=message.embeds[0], view=JobView(job_id, client, view_lifetime))
+                print(f'Message {message_id} in channel {channel_id} in server {server_id} reloaded')

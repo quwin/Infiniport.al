@@ -73,17 +73,17 @@ async def init_job_views(client: discord.Client):
   for row in jobs:
       print(row)
       expiration_date = float(row[1])
+      job_id = row[0]
       if current_time < expiration_date:
         view_lifetime = expiration_date - current_time
         try:
           message_id = row[2]
           channel_id = row[3]
           server_id = row[4]
-          await readd_job_view(client, view_lifetime, message_id, channel_id, server_id)
+          await readd_job_view(client, job_id, view_lifetime, message_id, channel_id, server_id)
         except Exception as e:
           print(f'Job view add on init error: {e},\n{row}')
       else:
-        job_id = row[0]
         try:
           await delete_job(job_id)
           await delete_job_message(job_id, client)
