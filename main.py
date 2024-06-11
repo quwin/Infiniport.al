@@ -83,7 +83,7 @@ async def init_job_views(client: discord.Client):
         except Exception as e:
           print(f'Job view add on init error: {e},\n{row}')
       else:
-        if message_id is None and channel_id is None and server_id is None: # backwards compatability
+        if server_id is None: # backwards compatability
           client.add_view(JobView(job_id, client))
         else:
           try:
