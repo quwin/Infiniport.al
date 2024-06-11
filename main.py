@@ -77,20 +77,20 @@ async def init_job_views(client: discord.Client):
       channel_id = row[3]
       server_id = row[4]
       if current_time < expiration_date:
-        view_lifetime = expiration_date - current_time
-        try:
-          await readd_job_view(client, job_id, view_lifetime, message_id, channel_id, server_id)
-        except Exception as e:
-          print(f'Job view add on init error: {e},\n{row}')
-      else:
         if server_id is None: # backwards compatability
           client.add_view(JobView(job_id, client))
         else:
+          view_lifetime = expiration_date - current_time
           try:
-            await delete_job(job_id)
-            await delete_job_message(job_id, client)
+            await readd_job_view(client, job_id, view_lifetime, message_id, channel_id, server_id)
           except Exception as e:
-            print(f'Job delete on init error: {e},\n{row}')
+            print(f'Job view add on init error: {e},\n{row}')
+      else:
+        try:
+          await delete_job(job_id)
+          await delete_job_message(job_id, client)
+        except Exception as e:
+          print(f'Job delete on init error: {e},\n{row}')
     
 @tree.command(name="clear_commands", description="Clear commands",
               guild=discord.Object(id=1234015429874417706))
