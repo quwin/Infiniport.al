@@ -82,6 +82,11 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
         except ValueError:
             await interaction.response.send_message("Invalid input for time limit. Please enter a valid number.", ephemeral=True)
             return
+        try:
+            int_quantity: int = int(quantity)
+        except ValueError:
+            await interaction.response.send_message("Invalid input for quantity. Please enter a valid integer.", ephemeral=True)
+            return
         
         if interaction.message:
             await interaction.message.delete()
@@ -101,7 +106,7 @@ class JobInput(discord.ui.Modal, title='Input Task Details:'):
             return
 
         try:
-            response = await create_or_edit_job(interaction, item, quantity, reward, details, expiration_date, new_view, interaction_id, claimer_id)
+            response = await create_or_edit_job(interaction, item, int_quantity, reward, details, expiration_date, new_view, interaction_id, claimer_id)
             message_id = self.job_data.get("message_id", response.id)
             channel_id = self.job_data.get("channel_id", response.channel.id)
     
