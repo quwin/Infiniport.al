@@ -9,7 +9,7 @@ async def nft_land_data(conn, session):
     total_data_batch = []
     skill_data_batch = {skill: [] for skill in SKILLS}
     cursor = await conn.cursor()
-    limiter = AdaptiveRateLimiter(3, 1)
+    limiter = AdaptiveRateLimiter(6, 1)
 
     
     while i <= 5000:
