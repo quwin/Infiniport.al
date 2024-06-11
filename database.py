@@ -150,6 +150,11 @@ async def fetch_job(job_id):
         job = await cursor.fetchone()
         return job
 
+async def fetch_job_location(job_id):
+    async with aiosqlite.connect('jobs.db') as db, db.execute('SELECT message_id, channel_id, server_id FROM jobs WHERE job_id = ?', (job_id,)) as cursor:
+        job = await cursor.fetchone()
+        return job
+
 async def add_job(job_id, author_id, item, quantity, reward, details, time_limit, message_id, channel_id, server_id, claimer_id=None):
     async with aiosqlite.connect('jobs.db') as db:
         await db.execute('''

@@ -2,7 +2,7 @@ import asyncio
 import discord
 import time
 from constants import SKILLS
-from database import fetch_job, delete_job, update_job_claimer, add_job, update_job_message
+from database import fetch_job, delete_job, update_job_claimer, add_job, update_job_message, fetch_job_location
 from modal import JobInput, embed_job
 
 pixelshine = '<a:PIXELshine:1241404259774496878>'
@@ -190,12 +190,11 @@ async def interact_job(interaction: discord.Interaction, view, job_id: str,
 
 async def delete_job_message(job_id, client):
     try:
-        job_data = await fetch_job(job_id)
+        job_data = await fetch_job_location(job_id)
         if job_data:
-            message_id = job_data[8]
-            channel_id = job_data[9]
-            server_id = job_data[10]
-            print(message_id, channel_id, server_id)
+            message_id = job_data[0]
+            channel_id = job_data[1]
+            server_id = job_data[2]
             guild = client.get_guild(int(server_id))
             if guild:
                 channel = guild.get_channel(int(channel_id))
@@ -204,7 +203,7 @@ async def delete_job_message(job_id, client):
                     if message:
                         await message.delete()
                         print(f"Auto deleted task {job_id}")
-            
+                
     
     except Exception as e:
         print(e)

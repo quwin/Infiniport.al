@@ -71,7 +71,6 @@ async def init_job_views(client: discord.Client):
     
   current_time: float  = time.time()
   for row in jobs:
-      print(row)
       expiration_date = float(row[1])
       job_id = row[0]
       message_id = row[2]
