@@ -5,6 +5,7 @@ import aiosqlite
 from rate_limiter import AdaptiveRateLimiter
 from land import prep_player_info
 from database import init_guild_db
+from profile_utils import lookup_profile
 import discord
 
 async def assignguild(interaction: discord.Interaction, guild_name: str):
@@ -45,7 +46,7 @@ async def guild_update(guild_data):
             return None
         for member in members:
             if member['role'] == 'Watcher' or member['role'] == 'Supporter':
-                break
+                continue
             else:
                 guild_data_batch.append((member['player']['_id'],
                                          member['player']['username'], 
@@ -96,11 +97,25 @@ async def all_guilds_data(conn, session):
                 if guild_id is None:
                     continue
                 data = await guild_data(session, guild_id)
-                members = await guild_update(cursor, guild_data)
+                members = await guild_update(data)
                 if members is None:
                     continue
-                
                 
                 # Places player data into arrays for batches
                 prep_player_info(player_data, total_data_batch, skill_data_batch)
                 i += 1
+
+async def batch_assigned_guilds_update():
+    async with aiosqlite.connect('leaderboard.db') as conn, conn.execute_fetchall(
+        'SELECT id FROM guilds'
+    ) as execute:
+        for id in execute:
+            guild_id = id[0]
+            async with conn.execute_fetchall(
+                f'SELECT user_id FROM guild_{guild_id}'
+            ) as guild_users:
+                for user in guild_users:
+                    user_id = user[0]
+                    result = await lookup_profile(conn, user_id)
+                    if result is None:
+                        print(f"Could not update user {user_id} in {guild_id}")

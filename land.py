@@ -100,8 +100,7 @@ def prep_player_info(player_data, total_data_batch, skill_data_batch):
         if lvl_data:
             total_level += lvl_data['level']
             total_exp += lvl_data['totalExp']
-            skill_data_batch[skill].append(
-                (id, username, lvl_data['level'], lvl_data['totalExp'], lvl_data['exp']))
+            skill_data_batch[skill].append((id, username, lvl_data['level'], lvl_data['totalExp'], lvl_data['exp']))
 
     total_data_batch.append((id, username, total_level, total_exp))
 

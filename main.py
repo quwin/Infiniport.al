@@ -11,6 +11,7 @@ from land import speck_data, nft_land_data
 from modal import JobInput
 from job import JobView, delete_job_message, readd_job_view
 from collab_land import collab_channel, CollabButtons
+from guild import batch_assigned_guilds_update
 import aiosqlite
 import aiohttp
 import time
@@ -39,10 +40,10 @@ async def on_ready():
   await init_job_views(client)
   client.add_view(CollabButtons())
   client.add_view(firstMessageView())
-  batch_speck_update.start()
+  # batch_speck_update.start()
   batch_nft_land_update.start()
   # update_voice_channel_name.start()
-  # batch_guild_update.start()
+  batch_guild_update.start()
 
 @client.event
 async def on_guild_join(guild: discord.Guild):
@@ -77,7 +78,7 @@ async def init_job_views(client: discord.Client):
       channel_id = row[3]
       server_id = row[4]
       if current_time < expiration_date:
-        if server_id is None: # backwards compatability
+        if server_id is None: # backwards compatability + DM compatability
           client.add_view(JobView(job_id, client))
         else:
           view_lifetime = expiration_date - current_time
@@ -227,11 +228,15 @@ async def batch_speck_update():
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await speck_data(conn, session)
 
-@tasks.loop(minutes=120)
+@tasks.loop(minutes=60)
 async def batch_nft_land_update():
   async with aiosqlite.connect(
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await nft_land_data(conn, session)
+
+@tasks.loop(minutes=60)
+async def batch_guild_update():
+  await batch_assigned_guilds_update()
 
 @tasks.loop(minutes=60)
 async def update_voice_channel_name():
