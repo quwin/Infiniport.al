@@ -2,16 +2,14 @@ import asyncio
 from constants import SKILLS, SPECK_OWNER_LINK, BATCH_SIZE, GIVE_UP, FIRST_SPECK, SPECK_RATE, NFT_LAND_LINK
 from rate_limiter import AdaptiveRateLimiter
 from database import batch_update_players
+from profile_utils import lookup_profile
 
 
-async def nft_land_data(conn, session):
+
+async def landowners_update(session, landowner_set: set[str]):
     i = 1
-    total_data_batch = []
-    skill_data_batch = {skill: [] for skill in SKILLS}
-    cursor = await conn.cursor()
-    limiter = AdaptiveRateLimiter(6, 1)
+    limiter = AdaptiveRateLimiter(5, 1)
 
-    
     while i <= 5000:
         async with limiter, session.get(NFT_LAND_LINK + str(i)) as response:
             if response.status != 200:
@@ -26,14 +24,24 @@ async def nft_land_data(conn, session):
                 i += 1
                 continue
 
-            # Places player data into arrays for batches
-            prep_player_info(player_data, total_data_batch, skill_data_batch)
-            i += 1
-    #After scanning all 5,000 Lands
-    print(f'{i-1} Lands scanned.')
-    await batch_update_players(cursor, total_data_batch, skill_data_batch)
-    await conn.commit()
-    limiter.reset()
+            player_id = player_data.get('_id', None)
+            
+            if player_id is None:
+                i += 1
+                continue
+
+            if player_id not in landowner_set:
+                landowner_set.add(player_id)
+
+
+
+async def nft_land_data(conn, landowner_set: set[str]):
+    limiter = AdaptiveRateLimiter(4, 1)
+    set_copy = landowner_set.copy()
+
+    for user_id in set_copy:
+        async with limiter:
+            await lookup_profile(conn, user_id)
 
         
 async def speck_data(conn, session):

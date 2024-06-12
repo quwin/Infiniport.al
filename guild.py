@@ -106,7 +106,7 @@ async def all_guilds_data(conn, session):
                 i += 1
 
 async def batch_assigned_guilds_update():
-    limiter = AdaptiveRateLimiter(6, 1)
+    limiter = AdaptiveRateLimiter(4, 1)
     
     async with aiosqlite.connect('leaderboard.db') as conn, conn.execute_fetchall(
         'SELECT id FROM guilds'

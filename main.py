@@ -7,7 +7,7 @@ from profile_utils import lookup_profile, embed_profile
 from database import init_db, delete_job
 from leaderboard import manage_leaderboard
 from constants import TOKEN, SkillEnum, SortEnum
-from land import speck_data, nft_land_data
+from land import speck_data, nft_land_data, landowners_update
 from modal import JobInput
 from job import JobView, delete_job_message, readd_job_view
 from collab_land import collab_channel, CollabButtons
@@ -37,6 +37,7 @@ async def on_ready():
   except Exception as e:
     print(f"Error: {e}")
     
+  list_landowners_update.start()
   await init_job_views(client)
   client.add_view(CollabButtons())
   client.add_view(firstMessageView())
@@ -228,11 +229,18 @@ async def batch_speck_update():
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await speck_data(conn, session)
 
-@tasks.loop(minutes=60)
+landowner_set: set[str] = {'65e3dd3bebdfdac278077b85'} # My id cause why not
+
+@tasks.loop(minutes=720)
+async def list_landowners_update():
+  async with aiohttp.ClientSession() as session:
+    await landowners_update(session, landowner_set)
+
+@tasks.loop(minutes=30)
 async def batch_nft_land_update():
   async with aiosqlite.connect(
-      'leaderboard.db') as conn, aiohttp.ClientSession() as session:
-    await nft_land_data(conn, session)
+      'leaderboard.db') as conn:
+    await nft_land_data(conn, landowner_set)
 
 @tasks.loop(minutes=60)
 async def batch_guild_update():
