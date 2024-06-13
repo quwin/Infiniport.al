@@ -37,7 +37,6 @@ async def on_ready():
   except Exception as e:
     print(f"Error: {e}")
     
-  list_landowners_update.start()
   await init_job_views(client)
   client.add_view(CollabButtons())
   client.add_view(firstMessageView())
@@ -45,6 +44,8 @@ async def on_ready():
   batch_nft_land_update.start()
   # update_voice_channel_name.start()
   batch_guild_update.start()
+  list_landowners_update.start()
+  
 
 @client.event
 async def on_guild_join(guild: discord.Guild):

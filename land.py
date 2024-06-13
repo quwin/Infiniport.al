@@ -11,7 +11,7 @@ async def landowners_update(session, landowner_set: set[str]):
     limiter = AdaptiveRateLimiter(5, 1)
 
     while i <= 5000:
-        async with limiter, session.get(NFT_LAND_LINK + str(i)) as response:
+        async with session.get(NFT_LAND_LINK + str(i)) as response:
             if response.status != 200:
                 print(f'NFT Land response not Found: {i}')
                 await asyncio.sleep(5)
