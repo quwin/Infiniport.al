@@ -1,4 +1,5 @@
 import asyncio
+import time
 from constants import SKILLS, SPECK_OWNER_LINK, BATCH_SIZE, GIVE_UP, FIRST_SPECK, SPECK_RATE, NFT_LAND_LINK
 from rate_limiter import AdaptiveRateLimiter
 from database import batch_update_players
@@ -8,9 +9,9 @@ from profile_utils import lookup_profile
 
 async def landowners_update(session, landowner_set: set[str]):
     i = 1
-    limiter = AdaptiveRateLimiter(2, 1)
 
     while i <= 5000:
+        time.sleep(.25)
         async with session.get(NFT_LAND_LINK + str(i)) as response:
             if response.status != 200:
                 print(f'NFT Land response not Found: {i}')
@@ -36,12 +37,11 @@ async def landowners_update(session, landowner_set: set[str]):
 
 
 async def nft_land_data(conn, landowner_set: set[str]):
-    limiter = AdaptiveRateLimiter(2, 1)
     set_copy = landowner_set.copy()
 
     for user_id in set_copy:
-        async with limiter:
-            await lookup_profile(conn, user_id)
+        await lookup_profile(conn, user_id)
+        time.sleep(.25)
 
         
 async def speck_data(conn, session):

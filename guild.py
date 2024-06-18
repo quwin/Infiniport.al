@@ -7,6 +7,7 @@ from land import prep_player_info
 from database import init_guild_db
 from profile_utils import lookup_profile
 import discord
+import time
 
 async def assignguild(interaction: discord.Interaction, guild_name: str):
   if interaction.guild is None:
@@ -106,7 +107,6 @@ async def all_guilds_data(conn, session):
                 i += 1
 
 async def batch_assigned_guilds_update():
-    limiter = AdaptiveRateLimiter(2, 1)
     
     async with aiosqlite.connect('leaderboard.db') as conn, conn.execute_fetchall(
         'SELECT id FROM guilds'
@@ -118,7 +118,7 @@ async def batch_assigned_guilds_update():
             ) as guild_users:
                 for user in guild_users:
                     username = user[0]
-                    async with limiter:
-                        result = await lookup_profile(conn, username)
-                        if result is None:
-                            print(f"Could not update user {username} in {guild_id}")
+                    result = await lookup_profile(conn, username)
+                    if result is None:
+                        print(f"Could not update user {username} in {guild_id}")
+                    time.sleep(.25)
