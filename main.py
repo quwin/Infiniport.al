@@ -38,13 +38,14 @@ async def on_ready():
     print(f"Error: {e}")
     
   await init_job_views(client)
+  await leave_personal_servers(client)
   client.add_view(CollabButtons())
   client.add_view(firstMessageView())
   # batch_speck_update.start()
-  batch_nft_land_update.start()
+  #batch_nft_land_update.start()
   # update_voice_channel_name.start()
-  batch_guild_update.start()
-  list_landowners_update.start()
+  #batch_guild_update.start()
+  #list_landowners_update.start()
   
 
 @client.event
@@ -66,6 +67,47 @@ async def on_guild_join(guild: discord.Guild):
 
     await config_channel(settings)
     await collab_channel(connect)
+
+async def leave_personal_servers(client: discord.Client):
+  for guild in client.guilds:
+    member_count = guild.member_count
+    if member_count is not None and member_count < 5:
+      owner = guild.owner
+      server_name = guild.name
+      if owner is not None:
+          try:
+            await owner.send(embed=leave_server_embed(server_name))
+            print(f'Sent message to the owner of guild: {guild.name}')
+          except discord.Forbidden:
+            general_channel = discord.utils.find(lambda c: c.name == 'general', guild.channels)
+            if general_channel and general_channel.type == discord.ChannelType.text:
+                try:
+                    await general_channel.send(embed=leave_server_embed(server_name))
+                    print(f'Sent message in #general of guild: {guild.name}')
+                except discord.Forbidden:
+                    print(f'Could not send message in #general of guild: {guild.name}')
+      print(f'Leaving guild: {guild.name} (ID: {guild.id}) due to insufficient members ({member_count})')
+      await guild.leave()
+
+def leave_server_embed(server_name):
+  embed = discord.Embed(
+    title=f"Important Infiniportal Announcement:",
+    color=0x00ff00)
+  embed.add_field(name="",
+          value= "@everyone \n\n" +
+          "Hi, this is the Infiniportal Dev Speaking. First, I would like to thank you for your support. " +
+          "The Infiniportal Discord bot has reached 100 servers joined in only a day. However, this means that I have hit a limit of servers the bot can join. \n \n" + 
+          f"In order to free up space for other servers to use the bot, it has automatically left your server: {server_name} \n \n" +
+          "I have determined that your use-case for the bot would be better served in a DM. You are free to interact with the Bot via DM.\n"
+          "Feel free to use `/lookup` via direct message for your bot needs. \n" +
+          "Alternatively, you, and another others which wish to use the bot may join the official Infiniportal Discord Server, which has all of it's functions available. \n" +
+          "You may access it at: https://discord.gg/bNcywxF7u5\n" +
+          "If you feel like your server needs the bot, or was removed unfairly, feel free to message @quwin, and I will get it sorted. \n" +
+          "Thank You."
+          ,
+          inline=False)
+  embed.set_thumbnail(url='https://d31ss916pli4td.cloudfront.net/environments/icons/land.png')
+  return embed
 
 
 async def init_job_views(client: discord.Client):
