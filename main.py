@@ -42,10 +42,10 @@ async def on_ready():
   client.add_view(CollabButtons())
   client.add_view(firstMessageView())
   # batch_speck_update.start()
-  #batch_nft_land_update.start()
+  batch_nft_land_update.start()
   # update_voice_channel_name.start()
-  #batch_guild_update.start()
-  #list_landowners_update.start()
+  batch_guild_update.start()
+  list_landowners_update.start()
   
 
 @client.event
@@ -113,7 +113,7 @@ def leave_server_embed(server_name):
           f"In order to free up space for other servers to use the bot, it has automatically left your server: {server_name} \n \n" +
           "I have determined that your use-case for the bot would be better served in a DM. You are free to interact with the Bot via DM.\n"
           "Feel free to use `/lookup` via direct message for your bot needs. \n" +
-          "Alternatively, you, and another others which wish to use the bot may join the official Infiniportal Discord Server, which has all of it's functions available. \n" +
+          "Alternatively, you and others which wish to use the bot may join the official Infiniportal Discord Server, which has all of it's functions available. \n" +
           "You may access it at: https://discord.gg/bNcywxF7u5\n" +
           "If you feel like your server needs the bot, or was removed unfairly, feel free to message @quwin, and I will get it sorted. \n" +
           "Thank You."
@@ -285,7 +285,7 @@ async def batch_speck_update():
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await speck_data(conn, session)
 
-landowner_set: set[str] = {'65e3dd3bebdfdac278077b85'} # My id cause why not
+landowner_set: set[str] = {'Quwin',} # My id cause why not
 
 @tasks.loop(minutes=720)
 async def list_landowners_update():

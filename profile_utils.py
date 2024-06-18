@@ -5,12 +5,14 @@ import urllib.parse
 import discord
 
 async def lookup_profile(c, input):
-  async with aiohttp.ClientSession() as session, session.get(PROFILE_MID_LINK + input) as response:
-    if response.status != 200:
-      print(f"Searched for name: {input}")
-      data = await profile_finder(session, input)
-    else:
-      data = await response.json()  
+  async with aiohttp.ClientSession() as session:
+    data = await profile_finder(session, input)
+  #async with aiohttp.ClientSession() as session, session.get(PROFILE_MID_LINK + input) as response:
+  #  if response.status != 200:
+  #    print(f"Searched for name: {input}")
+  #    data = await profile_finder(session, input)
+  #  else:
+  #    data = await response.json()  
 
   if data is None:
     return None

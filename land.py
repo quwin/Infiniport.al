@@ -8,7 +8,7 @@ from profile_utils import lookup_profile
 
 async def landowners_update(session, landowner_set: set[str]):
     i = 1
-    limiter = AdaptiveRateLimiter(5, 1)
+    limiter = AdaptiveRateLimiter(2, 1)
 
     while i <= 5000:
         async with session.get(NFT_LAND_LINK + str(i)) as response:
@@ -24,7 +24,7 @@ async def landowners_update(session, landowner_set: set[str]):
                 i += 1
                 continue
 
-            player_id = player_data.get('_id', None)
+            player_id = player_data.get('username', None)
             
             if player_id is None:
                 i += 1
@@ -36,7 +36,7 @@ async def landowners_update(session, landowner_set: set[str]):
 
 
 async def nft_land_data(conn, landowner_set: set[str]):
-    limiter = AdaptiveRateLimiter(4, 1)
+    limiter = AdaptiveRateLimiter(2, 1)
     set_copy = landowner_set.copy()
 
     for user_id in set_copy:

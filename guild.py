@@ -106,7 +106,7 @@ async def all_guilds_data(conn, session):
                 i += 1
 
 async def batch_assigned_guilds_update():
-    limiter = AdaptiveRateLimiter(4, 1)
+    limiter = AdaptiveRateLimiter(2, 1)
     
     async with aiosqlite.connect('leaderboard.db') as conn, conn.execute_fetchall(
         'SELECT id FROM guilds'
@@ -114,11 +114,11 @@ async def batch_assigned_guilds_update():
         for id in execute:
             guild_id = id[0]
             async with conn.execute_fetchall(
-                f'SELECT user_id FROM guild_{guild_id}'
+                f'SELECT username FROM guild_{guild_id}'
             ) as guild_users:
                 for user in guild_users:
-                    user_id = user[0]
+                    username = user[0]
                     async with limiter:
-                        result = await lookup_profile(conn, user_id)
+                        result = await lookup_profile(conn, username)
                         if result is None:
-                            print(f"Could not update user {user_id} in {guild_id}")
+                            print(f"Could not update user {username} in {guild_id}")
