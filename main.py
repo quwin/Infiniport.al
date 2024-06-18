@@ -71,7 +71,7 @@ async def on_guild_join(guild: discord.Guild):
 async def leave_personal_servers(client: discord.Client):
   for guild in client.guilds:
     member_count = guild.member_count
-    if member_count is not None and member_count < 5:
+    if member_count is not None and member_count < 3:
       owner = guild.owner
       server_name = guild.name
       if owner is not None:
@@ -79,6 +79,20 @@ async def leave_personal_servers(client: discord.Client):
             await owner.send(embed=leave_server_embed(server_name))
             print(f'Sent message to the owner of guild: {guild.name}')
           except discord.Forbidden:
+            config_channel = discord.utils.find(lambda c: c.name == 'infiniportal-config', guild.channels)
+            connect_channel = discord.utils.find(lambda c: c.name == 'infiniportal-connect', guild.channels)
+            
+            if config_channel and config_channel.type == discord.ChannelType.text:
+              try:
+                await config_channel.delete()
+              except Exception as e:
+                print(f"Error deleting channel: {e} in guild {guild.name} (ID: {guild.id}) ")
+            if connect_channel and connect_channel.type == discord.ChannelType.text:
+              try:
+                await connect_channel.delete()
+              except Exception as e:
+                print(f"Error deleting channel: {e} in guild {guild.name} (ID: {guild.id}) ")
+                
             general_channel = discord.utils.find(lambda c: c.name == 'general', guild.channels)
             if general_channel and general_channel.type == discord.ChannelType.text:
                 try:
