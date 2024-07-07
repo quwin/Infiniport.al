@@ -19,11 +19,11 @@ def get_db():
 
 
 @app.route('/leaderboard/<table_name>/<order>/<page_number>/',
-           defaults={'server_id': None},
+           defaults={'guild_name': None},
            methods=['GET'])
-@app.route('/leaderboard/<table_name>/<order>/<page_number>/<server_id>',
+@app.route('/leaderboard/<table_name>/<order>/<page_number>/<guild_name>',
            methods=['GET'])
-def get_leaderboard(table_name, order, page_number, server_id):
+def get_leaderboard(table_name, order, page_number, guild_name):
     valid_orders = ['level', 'exp']
     valid_tables = SKILLS.copy()
     valid_tables.append('total')
@@ -35,14 +35,23 @@ def get_leaderboard(table_name, order, page_number, server_id):
 
     try:
         db = get_db()
-        if server_id:
+        if guild_name:
+            cursor1 = db.execute(
+                '''
+                SELECT id
+                FROM guilds
+                WHERE handle = ?''', (guild_name, ))
+            id = cursor1.fetchone()
+
+            print(id)
+
             cursor = db.execute(
                 f'''
                 SELECT u.username, u.{order}
                 FROM {table_name} u
-                JOIN guild_{server_id} gm ON gm.user_id = u.user_id
+                JOIN guild_{id[0]} gm ON gm.user_id = u.user_id
                 ORDER BY u.{order} DESC
-                LIMIT 10 OFFSET ?''', (offset, ))
+                LIMIT 15 OFFSET ?''', (offset, ))
         else:
             cursor = db.execute(
                 f'''

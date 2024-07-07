@@ -1,12 +1,12 @@
 async function fetchLeaderboard() {
     const tableName = document.getElementById('tableName').value;
     const order = document.getElementById('order').value;
-    const serverId = document.getElementById('serverId').value;
+    const guildHandle = document.getElementById('guildhandle').value.toLowerCase();
     const pageNumber = 1; // Start with the first page
 
     let url = `/leaderboard/${tableName}/${order}/${pageNumber}`;
-    if (serverId) {
-        url += `/${serverId}`;
+    if (guildHandle) {
+        url += `/${guildHandle}`;
     }
 
     const response = await fetch(url);
