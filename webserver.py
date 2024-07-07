@@ -31,7 +31,7 @@ def get_leaderboard(table_name, order, page_number, guild_name):
     if order not in valid_orders or table_name not in valid_tables:
         return jsonify({'error': 'Invalid table name or order'}), 400
 
-    offset = 10 * (int(page_number) - 1)
+    offset = 15 * (int(page_number) - 1)
 
     try:
         db = get_db()
@@ -58,7 +58,7 @@ def get_leaderboard(table_name, order, page_number, guild_name):
                 SELECT username, {order}
                 FROM {table_name}
                 ORDER BY {order} DESC
-                LIMIT 10 OFFSET ?''', (offset, ))
+                LIMIT 15 OFFSET ?''', (offset, ))
 
         rows = cursor.fetchall()
         return jsonify([dict(row) for row in rows])
