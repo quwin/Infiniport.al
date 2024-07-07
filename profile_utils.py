@@ -16,7 +16,12 @@ async def lookup_profile(c, input):
 
   if data is None:
     return None
-  (total_levels, total_skills) = total_stats(data['levels'])
+
+  levels = data.get('levels', None)
+  if levels is None:
+    return None
+
+  (total_levels, total_skills) = total_stats(levels)
 
   #Update Skills in leaderboard:
   await update_skills(c, data, total_levels, total_skills)
