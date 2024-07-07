@@ -1,0 +1,24 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    text-align: center;
+}
+
+#leaderboard {
+    list-style-type: none;
+    padding: 0;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+#leaderboard li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+select, input, button {
+    display: block;
+    margin: 10px auto;
+}

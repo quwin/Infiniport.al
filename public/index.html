@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Leaderboard</h1>
+    <select id="tableName">
+        <option value="total">Total</option>
+        <!-- Add more options for other tables if needed -->
+    </select>
+    <select id="order">
+        <option value="level">Level</option>
+        <option value="exp">Experience</option>
+    </select>
+    <input type="text" id="serverId" placeholder="Server ID (optional)">
+    <button onclick="fetchLeaderboard()">Get Leaderboard</button>
+    <ul id="leaderboard"></ul>
+
+    <script src="script.js"></script>
+</body>
+</html>

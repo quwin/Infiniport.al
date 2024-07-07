@@ -73,7 +73,7 @@ async def leaderboard_func(table_name, order, page_number, server_id=None):
 
         # Determine order field + validate inputs
         valid_orders = ['level', 'exp']
-        valid_tables = SKILLS
+        valid_tables = SKILLS.copy()
         valid_tables.append('total')
         if order not in valid_orders:
             order = 'level'

@@ -10,11 +10,11 @@ async def landowners_update(session, landowner_set: set[str]):
     i = 1
 
     while i <= 5000:
-        time.sleep(.25)
+        time.sleep(.2)
         async with session.get(NFT_LAND_LINK + str(i)) as response:
             if response.status != 200:
                 print(f'NFT Land response not Found: {i}')
-                await asyncio.sleep(5)
+                await asyncio.sleep(1)
                 i += 1
                 continue
 
@@ -44,7 +44,8 @@ async def nft_land_data(conn, landowner_set: set[str]):
 
     for user_id in set_copy:
         await lookup_profile(conn, user_id)
-        time.sleep(.25)
+        time.sleep(.2)
+
 
 async def speck_data(conn, session):
     i = 0
