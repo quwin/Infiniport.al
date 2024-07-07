@@ -107,18 +107,17 @@ async def all_guilds_data(conn, session):
                 i += 1
 
 async def batch_assigned_guilds_update():
-    
     async with aiosqlite.connect('leaderboard.db') as conn, conn.execute_fetchall(
         'SELECT id FROM guilds'
     ) as execute:
         for id in execute:
             guild_id = id[0]
             async with conn.execute_fetchall(
-                f'SELECT username FROM guild_{guild_id}'
+                f'SELECT user_id FROM guild_{guild_id}'
             ) as guild_users:
                 for user in guild_users:
-                    username = user[0]
-                    result = await lookup_profile(conn, username)
+                    user_id = user[0]
+                    result = await lookup_profile(conn, user_id)
                     if result is None:
-                        print(f"Could not update user {username} in {guild_id}")
+                        print(f"Could not update user {user_id} in {guild_id}")
                     time.sleep(.25)

@@ -285,7 +285,7 @@ async def batch_speck_update():
       'leaderboard.db') as conn, aiohttp.ClientSession() as session:
     await speck_data(conn, session)
 
-landowner_set: set[str] = {'Quwin',} # My id cause why not
+landowner_set: set[str] = {'65e3dd3bebdfdac278077b85',} # My id cause why not
 
 @tasks.loop(minutes=720)
 async def list_landowners_update():
@@ -294,6 +294,7 @@ async def list_landowners_update():
 
 @tasks.loop(minutes=30)
 async def batch_nft_land_update():
+  print(landowner_set)
   async with aiosqlite.connect(
       'leaderboard.db') as conn:
     await nft_land_data(conn, landowner_set)
@@ -301,10 +302,6 @@ async def batch_nft_land_update():
 @tasks.loop(minutes=60)
 async def batch_guild_update():
   await batch_assigned_guilds_update()
-
-@tasks.loop(minutes=60)
-async def update_voice_channel_name():
-  guild_id = 880961748092477453
   return
 
 client.run(TOKEN)

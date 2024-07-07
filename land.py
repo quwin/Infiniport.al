@@ -6,7 +6,6 @@ from database import batch_update_players
 from profile_utils import lookup_profile
 
 
-
 async def landowners_update(session, landowner_set: set[str]):
     i = 1
 
@@ -22,18 +21,22 @@ async def landowners_update(session, landowner_set: set[str]):
             data = await response.json()
             player_data = data.get('player', None)
             if player_data is None:
+                print(f'No player for NFT Land: {i}')
                 i += 1
                 continue
 
-            player_id = player_data.get('username', None)
-            
+            player_id = player_data.get('_id', None)
+
             if player_id is None:
+                print(f'No player for NFT Land: {i}')
                 i += 1
                 continue
 
             if player_id not in landowner_set:
                 landowner_set.add(player_id)
+                print(f"Found Landowner: {player_id}")
 
+            i += 1
 
 
 async def nft_land_data(conn, landowner_set: set[str]):
@@ -43,7 +46,6 @@ async def nft_land_data(conn, landowner_set: set[str]):
         await lookup_profile(conn, user_id)
         time.sleep(.25)
 
-        
 async def speck_data(conn, session):
     i = 0
     nulls = 0
@@ -55,11 +57,13 @@ async def speck_data(conn, session):
     while True:
         if i % BATCH_SIZE == 0:
             print(f'{i} Specks scanned.')
-            await batch_update_players(cursor, total_data_batch, skill_data_batch)
+            await batch_update_players(cursor, total_data_batch,
+                                       skill_data_batch)
             await conn.commit()
             limiter.reset()
 
-        async with limiter, session.get(SPECK_OWNER_LINK + str(FIRST_SPECK + i)) as response:
+        async with limiter, session.get(SPECK_OWNER_LINK +
+                                        str(FIRST_SPECK + i)) as response:
             if response.status != 200:
                 print(f'Speck number not Found: {FIRST_SPECK + i}')
                 await asyncio.sleep(5)
@@ -71,8 +75,11 @@ async def speck_data(conn, session):
             player_data = data.get('player', None)
             if player_data is None:
                 if nulls > GIVE_UP:
-                    print(f'Player Data not Found for Speck {FIRST_SPECK + i-GIVE_UP} through Speck {FIRST_SPECK + i}, stopping')
-                    await batch_update_players(cursor, total_data_batch, skill_data_batch)
+                    print(
+                        f'Player Data not Found for Speck {FIRST_SPECK + i-GIVE_UP} through Speck {FIRST_SPECK + i}, stopping'
+                    )
+                    await batch_update_players(cursor, total_data_batch,
+                                               skill_data_batch)
                     await conn.commit()
                     limiter.reset()
                     return
@@ -86,6 +93,7 @@ async def speck_data(conn, session):
             # Places player data into arrays for batches
             prep_player_info(player_data, total_data_batch, skill_data_batch)
             i += 1
+
 
 def prep_player_info(player_data, total_data_batch, skill_data_batch):
     total_level = 0
@@ -108,7 +116,8 @@ def prep_player_info(player_data, total_data_batch, skill_data_batch):
         if lvl_data:
             total_level += lvl_data['level']
             total_exp += lvl_data['totalExp']
-            skill_data_batch[skill].append((id, username, lvl_data['level'], lvl_data['totalExp'], lvl_data['exp']))
+            skill_data_batch[skill].append(
+                (id, username, lvl_data['level'], lvl_data['totalExp'],
+                 lvl_data['exp']))
 
     total_data_batch.append((id, username, total_level, total_exp))
-

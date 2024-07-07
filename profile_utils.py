@@ -4,15 +4,15 @@ from database import update_skills
 import urllib.parse
 import discord
 
+
 async def lookup_profile(c, input):
-  async with aiohttp.ClientSession() as session:
-    data = await profile_finder(session, input)
-  #async with aiohttp.ClientSession() as session, session.get(PROFILE_MID_LINK + input) as response:
-  #  if response.status != 200:
-  #    print(f"Searched for name: {input}")
-  #    data = await profile_finder(session, input)
-  #  else:
-  #    data = await response.json()  
+  async with aiohttp.ClientSession() as session, session.get(
+      PROFILE_MID_LINK + input) as response:
+    if response.status != 200:
+      print(f"Searched for name: {input}")
+      data = await profile_finder(session, input)
+    else:
+      data = await response.json()
 
   if data is None:
     return None
@@ -22,6 +22,7 @@ async def lookup_profile(c, input):
   await update_skills(c, data, total_levels, total_skills)
 
   return data, total_levels, total_skills
+
 
 def total_stats(levels):
   total_level = 0
@@ -37,38 +38,43 @@ def total_stats(levels):
 
 def embed_profile(data, total_levels, total_skills):
   embed = discord.Embed(title=f"**{data['username']}**",
-  description=f"**User ID**: `{data['_id']}`",
-  color=0x00ff00)
+                        description=f"**User ID**: `{data['_id']}`",
+                        color=0x00ff00)
 
   embed.add_field(name=f"Account Level: {total_levels}",
-  value=f"**Total Exp:** - {'{:,}'.format(int(total_skills))}",
-  inline=False)
+                  value=f"**Total Exp:** - {'{:,}'.format(int(total_skills))}",
+                  inline=False)
 
   # info for each Skill
   i = 0
   for skill in SKILLS:
     skill_data = data['levels'].get(f'{skill}', None)
     if skill_data:
-      embed.add_field(name=f"{SKILLS_EMOJI[i]} {skill.title()} - Lvl {skill_data['level']}",
-      value=f"> {'{:,}'.format(int(skill_data['totalExp']))} xp",
-      inline=True)
+      embed.add_field(
+          name=f"{SKILLS_EMOJI[i]} {skill.title()} - Lvl {skill_data['level']}",
+          value=f"> {'{:,}'.format(int(skill_data['totalExp']))} xp",
+          inline=True)
     i += 1
 
   # Thumbnail image data
-  image_url = data.get('currentAvatar', {}).get('pieces', {}).get('image', None)
+  image_url = data.get('currentAvatar', {}).get('pieces',
+                                                {}).get('image', None)
 
   if image_url:
     embed.set_thumbnail(url=image_url)
 
   # Footer text
-  embed.set_author(name="Pixels.tips Link", url=f"{PIXELS_TIPS_LINK}{data['_id']}")
+  embed.set_author(name="Pixels.tips Link",
+                   url=f"{PIXELS_TIPS_LINK}{data['_id']}")
 
   return embed
+
 
 #Finds profile info from string vs ID
 async def profile_finder(session, input):
   encoded_input = urllib.parse.quote(input)
-  async with session.get(SEARCH_PROFILE_LINK + encoded_input) as search_response:
+  async with session.get(SEARCH_PROFILE_LINK +
+                         encoded_input) as search_response:
     search_json = await search_response.json()
     for profile in search_json:
       if profile['username'] == input:
@@ -78,16 +84,18 @@ async def profile_finder(session, input):
           return profile
     if search_json:
       return search_json[0]
-    else: 
+    else:
       async with session.get(PROFILE_MID_LINK + input) as profile_response:
         if profile_response.status != 200:
           return None
         return await profile_response.json()
-    
+
+
 async def get_accounts_usernames(limiter, mids):
   link = 'https://pixels-server.pixels.xyz/v1/player/usernames?'
   extension = ''
   for mid in mids:
     extension += f'mid={mid}&'
-  async with limiter, aiohttp.ClientSession() as session, session.get(link + extension) as response:
+  async with limiter, aiohttp.ClientSession() as session, session.get(
+      link + extension) as response:
     return await response.json()

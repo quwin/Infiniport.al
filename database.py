@@ -33,9 +33,9 @@ async def init_db():
                 reward TEXT,
                 details TEXT,
                 time_limit REAL,
-                claimer_id INTEGER
-                message_id INTEGER
-                channel_id INTEGER
+                claimer_id INTEGER,
+                message_id INTEGER,
+                channel_id INTEGER,
                 server_id INTEGER
             )
         ''')
