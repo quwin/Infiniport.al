@@ -24,7 +24,10 @@ async def lookup_profile(c, input):
   (total_levels, total_skills) = total_stats(levels)
 
   #Update Skills in leaderboard:
-  await update_skills(c, data, total_levels, total_skills)
+  try:
+    await update_skills(c, data, total_levels, total_skills)
+  except Exception as e:
+    print(f"Error updating skills for {input}: {e}")
 
   return data, total_levels, total_skills
 
