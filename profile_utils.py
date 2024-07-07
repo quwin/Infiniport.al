@@ -5,7 +5,8 @@ import urllib.parse
 import discord
 
 
-async def lookup_profile(c, input):
+async def lookup_profile(conn, input):
+  c = await conn.cursor()
   async with aiohttp.ClientSession() as session, session.get(
       PROFILE_MID_LINK + input) as response:
     if response.status != 200:
@@ -26,6 +27,7 @@ async def lookup_profile(c, input):
   #Update Skills in leaderboard:
   try:
     await update_skills(c, data, total_levels, total_skills)
+    await conn.commit()
   except Exception as e:
     print(f"Error updating skills for {input}: {e}")
 

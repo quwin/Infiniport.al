@@ -191,8 +191,7 @@ async def raw_sql(interaction, database: str, execute: str):
 async def lookup(interaction, input: str):
   try:
     async with aiosqlite.connect('leaderboard.db') as conn:
-      c = await conn.cursor()
-      result = await lookup_profile(c, input)
+      result = await lookup_profile(conn, input)
       if result is None:
         string = f"Could not find the player `{input}`. Please try again"
         await interaction.response.send_message(string, ephemeral=True)
@@ -201,8 +200,7 @@ async def lookup(interaction, input: str):
   
       embed = embed_profile(data, total_levels, total_skills)
       await interaction.response.send_message(embed=embed)
-  
-      await conn.commit()
+
   except Exception as e:
     if interaction.guild:
       print(f"/lookup error in server {interaction.guild.id} / {interaction.guild.name}: {e}")
