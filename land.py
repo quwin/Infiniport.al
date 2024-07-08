@@ -4,14 +4,15 @@ from constants import SKILLS, SPECK_OWNER_LINK, BATCH_SIZE, GIVE_UP, FIRST_SPECK
 from rate_limiter import AdaptiveRateLimiter
 from database import batch_update_players
 from profile_utils import lookup_profile
+import aiohttp
 
 
-async def landowners_update(session, landowner_set: set[str]):
+async def landowners_update(landowner_set: set[str]):
     i = 1
 
     while i <= 5000:
         time.sleep(.2)
-        async with session.get(NFT_LAND_LINK + str(i)) as response:
+        async with aiohttp.ClientSession() as session, session.get(NFT_LAND_LINK + str(i)) as response:
             if response.status != 200:
                 print(f'NFT Land response not Found: {i}')
                 await asyncio.sleep(1)
@@ -34,7 +35,6 @@ async def landowners_update(session, landowner_set: set[str]):
 
             if player_id not in landowner_set:
                 landowner_set.add(player_id)
-                print(f"Found Landowner: {player_id}")
 
             i += 1
 

@@ -86,34 +86,36 @@ async def update_skills(c, json, total_level, total_exp):
               (json['_id'], json['username'], skill_data['level'],
                skill_data['totalExp'], skill_data['exp']))
     
-    print(f'User ID {json["_id"]} updated!')
+    # print(f'User ID {json["_id"]} updated!')
 
-async def init_guild_db(server_id, guild_data):
+async def init_guild_db(guild_data, server_id = None):
     async with aiosqlite.connect('discord.db') as discord, aiosqlite.connect('leaderboard.db') as leaderboard: 
         lb = await leaderboard.cursor()
         id = guild_data['_id']
         await lb.execute(
-            f'''CREATE TABLE IF NOT EXISTS guild_{id}
-            (user_id text PRIMARY KEY, username text, role text)'''
-        )
-        await lb.execute(
             '''INSERT OR REPLACE INTO guilds
             (id, handle, emblem, shard_price, land_count)
             VALUES (?, ?, ?, ?, ?)''',
-            (id, guild_data['handle'], guild_data['emblem'], guild_data['membershipsCount'], guild_data['mapCount'],)
+            (id, guild_data['handle'], guild_data.get('emblem', ''), guild_data['membershipsCount'], guild_data['mapCount'],)
+        )
+        await lb.execute(
+            f'''CREATE TABLE IF NOT EXISTS guild_{id}
+            (user_id text PRIMARY KEY, username text, role text)'''
         )
         
-        async with discord.execute('SELECT 1 FROM discord_servers WHERE server_id = ?', (server_id,)) as cursor:
-            exists = await cursor.fetchone()
-            if exists:
-                await discord.execute('UPDATE discord_servers SET linked_guild = ? WHERE server_id = ?', (id, server_id))
-            else:
-                await discord.execute('''
-                    INSERT INTO discord_servers (server_id, linked_guild)
-                    VALUES (?, ?)
-                ''', (server_id, id))
-                
-        await discord.commit()
+        if server_id:
+            async with discord.execute('SELECT 1 FROM discord_servers WHERE server_id = ?', (server_id,)) as cursor:
+                exists = await cursor.fetchone()
+                if exists:
+                    await discord.execute('UPDATE discord_servers SET linked_guild = ? WHERE server_id = ?', (id, server_id))
+                else:
+                    await discord.execute('''
+                        INSERT INTO discord_servers (server_id, linked_guild)
+                        VALUES (?, ?)
+                    ''', (server_id, id))
+                    
+            await discord.commit()
+        
         await leaderboard.commit()
 
 async def update_job_claimer(job_id, claimer_id):
