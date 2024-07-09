@@ -1,29 +1,34 @@
-from flask import Flask, request, redirect, url_for, render_template_string, jsonify, send_from_directory
-from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY
+from quart import Quart, request, redirect, url_for, render_template_string, jsonify, send_from_directory
+from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY, SKILLS
 from database import add_collab_tokens, add_collab_wallets
 from profile_utils import profile_finder
-from constants import SKILLS
 import aiohttp
 import asyncio
-import sqlite3
+import aiosqlite
+import os
 
-app = Flask(__name__)
+app = Quart(__name__, static_folder='frontend/build', static_url_path='')
 
 DATABASE = 'leaderboard.db'
 
 
-def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
+async def get_db():
+    conn = await aiosqlite.connect(DATABASE)
+    conn.row_factory = aiosqlite.Row
     return conn
 
 
 @app.route('/leaderboard/<table_name>/<order>/<page_number>/',
            defaults={'guild_name': None},
            methods=['GET'])
+@app.route('/leaderboard/<table_name>/<order>/<page_number>',
+           defaults={'guild_name': None},
+           methods=['GET'])
 @app.route('/leaderboard/<table_name>/<order>/<page_number>/<guild_name>',
            methods=['GET'])
-def get_leaderboard(table_name, order, page_number, guild_name):
+@app.route('/leaderboard/<table_name>/<order>/<page_number>/<guild_name>/',
+           methods=['GET'])
+async def get_leaderboard(table_name, order, page_number, guild_name=None):
     valid_orders = ['level', 'exp']
     valid_tables = SKILLS.copy()
     valid_tables.append('total')
@@ -34,38 +39,44 @@ def get_leaderboard(table_name, order, page_number, guild_name):
     offset = 15 * (int(page_number) - 1)
 
     try:
-        db = get_db()
+        db = await get_db()
         if guild_name:
-            cursor1 = db.execute(
+            cursor1 = await db.execute(
                 '''
                 SELECT id
                 FROM guilds
                 WHERE handle = ?''', (guild_name, ))
-            id = cursor1.fetchone()
+            id = await cursor1.fetchone()
 
-            print(id)
-
-            cursor = db.execute(
-                f'''
-                SELECT u.username, u.{order}
-                FROM {table_name} u
-                JOIN guild_{id[0]} gm ON gm.user_id = u.user_id
-                ORDER BY u.{order} DESC
-                LIMIT 15 OFFSET ?''', (offset, ))
+            if id:
+                cursor = await db.execute(
+                    f'''
+                    SELECT u.username, u.{order}
+                    FROM {table_name} u
+                    JOIN guild_{id[0]} gm ON gm.user_id = u.user_id
+                    ORDER BY u.{order} DESC
+                    LIMIT 15 OFFSET ?''', (offset, ))
+            else:
+                cursor = await db.execute(
+                    f'''
+                    SELECT username, {order}
+                    FROM {table_name}
+                    ORDER BY {order} DESC
+                    LIMIT 15 OFFSET ?''', (offset, ))
         else:
-            cursor = db.execute(
+            cursor = await db.execute(
                 f'''
                 SELECT username, {order}
                 FROM {table_name}
                 ORDER BY {order} DESC
                 LIMIT 15 OFFSET ?''', (offset, ))
 
-        rows = cursor.fetchall()
+        rows = await cursor.fetchall()
         return jsonify([dict(row) for row in rows])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
-        db.close()
+        await db.close()
 
 
 async def get_access_token(auth_code):
@@ -176,14 +187,25 @@ def error():
     return "<h1>Error: Authorization code not found.</h1>"
 
 
+# Serve static files
 @app.route('/')
-def serve_index():
-    return send_from_directory('public', 'index.html')
+async def serve_index():
+    if app.static_folder:
+        return await send_from_directory(app.static_folder, 'index.html')
+    else:
+        return 'Static folder not configured'
 
 
 @app.route('/<path:path>')
-def serve_static(path):
-    return send_from_directory('public', path)
+async def serve_static(path):
+    if app.static_folder:
+        if path != "" and os.path.exists(os.path.join(app.static_folder,
+                                                      path)):
+            return await send_from_directory(app.static_folder, path)
+        else:
+            return await send_from_directory(app.static_folder, 'index.html')
+    else:
+        return 'Static folder not configured'
 
 
 if __name__ == "__main__":

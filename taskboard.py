@@ -37,7 +37,7 @@ class TaskboardView(discord.ui.View):
         await self.update_taskboard(interaction)
     
     async def update_taskboard(self, interaction: discord.Interaction):
-        embed = await taskboard_embed(interaction, self.page_number, self.label)
+        embed = await taskboard_embed(interaction, self.page_number)
         await interaction.response.edit_message(embed=embed, view=self)
     
     async def on_timeout(self):
@@ -46,12 +46,12 @@ class TaskboardView(discord.ui.View):
         except Exception as e:
             print(f"Failed to edit message on timeout: {str(e)}")
 
-async def taskboard_embed(interaction: discord.Interaction, page_number: int, type: bool):
+async def taskboard_embed(interaction: discord.Interaction, page_number: int):
     embed = discord.Embed(title='**Taskboard:**', color=0x00ff00)
 
     list = "----------------------------------------------------\n"
     
-    unclaimed_jobs = await fetch_unclaimed_jobs(page_number, str(interaction.guild.id)) if type and interaction.guild else await fetch_unclaimed_jobs(page_number)
+    unclaimed_jobs = await fetch_unclaimed_jobs(page_number, str(interaction.guild.id)) if interaction.guild else await fetch_unclaimed_jobs(page_number)
     for job in unclaimed_jobs:
         job_id, author_id, item, quantity, reward, details, time_limit, _, _, _, _  = job
         member = None
