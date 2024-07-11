@@ -164,4 +164,5 @@ cython_debug/
 constants.py
 node_modules/
 *.replit
+.replit
 frontend/build/

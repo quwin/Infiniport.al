@@ -58,7 +58,7 @@ async def guild_update(guild_data):
             print(f"Unable to update guild members for {guild_id}")
             return None
         for member in members:
-            if member['role'] == 'Watcher' or member['role'] == 'Supporter':
+            if member['role'] == 'Watcher':  # or member['role'] == 'Supporter'
                 continue
             else:
                 guild_data_batch.append(
