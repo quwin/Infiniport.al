@@ -28,7 +28,8 @@ function HeaderBar() {
     };
   }, []);
 
-  return (
+  return ( /*purple = 712cf9 */
+
     <>
       <style type="text/css">
         {`    
@@ -45,13 +46,12 @@ function HeaderBar() {
       .btn-xxl {
         padding: .2rem 1.1rem;
         font-size: 1rem;
-      }
-
+      } 
       .navbar-infini {
         background-color: #18141a !important;
         color: black !important;
         border-bottom: 1px solid !important;
-        border-color: #712cf9 !important
+        border-color: #b42a4c !important
       }
 
       .navbar-infini .navbar-brand {
@@ -79,7 +79,7 @@ function HeaderBar() {
               <Nav className="me-auto">
               <Row>
               <Col>
-                <Nav.Link href="leaderboard">Leaderboards</Nav.Link>
+                <Nav.Link href="about">About</Nav.Link>
               </Col>
               <Col>
                 <NavDropdown data-bs-theme="light" title="Discord App" id="basic-nav-dropdown">
@@ -96,7 +96,7 @@ function HeaderBar() {
             <>
               <Navbar.Toggle aria-controls="basic-navbar-nav" /> 
                 <Navbar.Collapse id="basic-navbar-nav">
-                <Col xs={6}>
+                <Col xs={8}>
                   <Form className="d-flex">
                     <Form.Control
                       data-bs-theme="light"
@@ -113,9 +113,9 @@ function HeaderBar() {
             <>
               <Col xs={4}>
                  <InputGroup>
-                  <InputGroup.Text data-bs-theme="light" id="basic-addon1">Find Profile:</InputGroup.Text>
+                  <InputGroup.Text data-bs-theme="dark" id="basic-addon1">Find Profile:</InputGroup.Text>
                   <Form.Control
-                    data-bs-theme="light"
+                    data-bs-theme="dark"
                     placeholder="Search by Username/Wallet/PlayerID"
                     aria-label="Search"
                     aria-describedby="basic-addon1"
@@ -123,7 +123,7 @@ function HeaderBar() {
                 </InputGroup>
               </Col>
               <Col xs="auto">
-                <Button variant="infini" size="xxl" type="submit">Lookup</Button>
+                <Button variant="outline-light" size="xxl" type="submit">Lookup</Button>
               </Col>
             </>
           )}

@@ -46,7 +46,7 @@ function App() {
     <style type="text/css">
       {`
     body {
-      background-color: #272222; /* Set the desired background color */
+      background-color: #18141a; /* Set the desired background color */
       margin: 0; /* Remove default margin */
       padding: 0; /* Remove default padding */
       height: 100vh; /* Ensure the body covers the full viewport height */
