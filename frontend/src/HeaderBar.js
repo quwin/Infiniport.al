@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from "axios";
 import Container from 'react-bootstrap/Container';
 import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
@@ -8,11 +9,42 @@ import FormControl from 'react-bootstrap/FormControl'
 import InputGroup from 'react-bootstrap/InputGroup';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Button from 'react-bootstrap/Button';
+import Button from 'react-bootstrap/Button'
+import Stack from "react-bootstrap/Stack";
+import DropdownButton from 'react-bootstrap/DropdownButton';
+import Dropdown from 'react-bootstrap/Dropdown';
+import searchPlayer from './Search'
 import logo from './logo.png';
 
 
 function HeaderBar() {
+  const [input, setInput] = useState("");
+  const [searchResult, setSearchResult] = useState([]);
+  const typingTimeout = useRef(null);
+  useEffect(() => {
+    if (typingTimeout.current) {
+      clearTimeout(typingTimeout.current);
+    }
+
+    typingTimeout.current = setTimeout(async () => {
+      if (input) {
+        const result = await searchPlayer(input);
+        setSearchResult(result);
+      }
+    }, 1000);
+
+    return () => {
+      if (typingTimeout.current) {
+        clearTimeout(typingTimeout.current);
+      }
+    };
+  }, [input]);
+
+  const handleChange = (event) => {
+    setInput(event.target.value);
+  };
+
+  
   const [isMobile, setIsMobile] = useState(window.innerWidth < 996);
 
   useEffect(() => {
@@ -96,35 +128,70 @@ function HeaderBar() {
             <>
               <Navbar.Toggle aria-controls="basic-navbar-nav" /> 
                 <Navbar.Collapse id="basic-navbar-nav">
-                <Col xs={8}>
-                  <Form className="d-flex">
-                    <Form.Control
-                      data-bs-theme="light"
-                      placeholder="Username/Wallet/UserID"
-                      aria-label="Search"
-                      aria-describedby="basic-addon1"
-                    />
-                    <Button variant="infini" size="xxl" type="submit">Lookup</Button>
-                  </Form>
-                </Col>
+                  <Stack direction="horizontal">
+                    <Stack direction="vertical">
+                      <InputGroup>
+                        {input.length > 0 && (
+                          <DropdownButton
+                            title=""
+                            data-bs-theme="dark"
+                            show={true}
+                            style={{ position: "absolute", width: "100%", top: "100%", zIndex: 1000 }}
+                          >
+                            {searchResult.map((player, index) => (
+                              <Dropdown.Item key={player._id} eventKey={player.username}>
+                                {player.username}
+                              </Dropdown.Item>
+                            ))}
+                          </DropdownButton>
+                        )}
+                        <Form>
+                          <Form.Control
+                            data-bs-theme="dark"
+                            placeholder="Username/Wallet"
+                            aria-label="Search"
+                            value={input}
+                            onChange={handleChange}
+                          />
+                         </Form>
+                        </InputGroup>
+                    </Stack>
+                    <Button variant="outline-light" size="xxl" type="submit">Lookup</Button>
+                  </Stack>
               </Navbar.Collapse>
             </>
           ) : (
             <>
-              <Col xs={4}>
-                 <InputGroup>
-                  <InputGroup.Text data-bs-theme="dark" id="basic-addon1">Find Profile:</InputGroup.Text>
-                  <Form.Control
-                    data-bs-theme="dark"
-                    placeholder="Search by Username/Wallet/PlayerID"
-                    aria-label="Search"
-                    aria-describedby="basic-addon1"
-                  />
-                </InputGroup>
-              </Col>
-              <Col xs="auto">
+              <Stack direction="horizontal">
+                <Stack direction="vertical">
+                  <InputGroup>
+                    {input.length > 0 && (
+                      <DropdownButton
+                        title=""
+                        data-bs-theme="dark"
+                        show={true}
+                        style={{ position: "absolute", width: "100%", top: "100%", zIndex: 1000 }}
+                      >
+                        {searchResult.map((player, index) => (
+                          <Dropdown.Item key={player._id} eventKey={player.username}>
+                            {player.username}
+                          </Dropdown.Item>
+                        ))}
+                      </DropdownButton>
+                    )}
+                    <Form>
+                      <Form.Control
+                        data-bs-theme="dark"
+                        placeholder="Search by Username/Wallet"
+                        aria-label="Search"
+                        value={input}
+                        onChange={handleChange}
+                      />
+                     </Form>
+                    </InputGroup>
+                </Stack>
                 <Button variant="outline-light" size="xxl" type="submit">Lookup</Button>
-              </Col>
+              </Stack>
             </>
           )}
         </Container>

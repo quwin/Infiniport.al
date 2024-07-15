@@ -42,7 +42,6 @@ function Leaderboard() {
     }
 
     try {
-      console.log(url);
       const response = await axios.get(url);
       setLeaderboard(response.data);
     } catch (error) {
@@ -177,13 +176,13 @@ function Leaderboard() {
             <Stack gap={1} direction="vertical" className="stack-main">
               <Form>
                 <Stack direction="horizontal">
-                  <Form.Group sm={{span: 4}} as={Col} controlId="formUsername">
-                    <Form.Label className="form-label">Find Player</Form.Label>
-                    <Form.Control data-bs-theme="dark" type="username"  placeholder="Enter Username"/>
+                  <Form.Group sm={{span: 4}} as={Col} controlId="formUsernameLb">
+                    <Form.Label className="form-label">Find Player</Form.Label>  
+                    <Form.Control data-bs-theme="dark" type="username" placeholder="Enter Username"/>
                   </Form.Group>
-                  <Form.Group sm={{ span: 7, offset: 1}} as={Col} controlId="formUsername">
+                  <Form.Group sm={{ span: 7, offset: 1}} as={Col} controlId="formGuild">
                     <Form.Label>Search Guild</Form.Label>
-                    <Form.Control data-bs-theme="dark" type="username" placeholder="Enter Guild Handle"/>
+                    <Form.Control data-bs-theme="dark" type="guild" placeholder="Enter Guild Handle" onChange={(e) => setServerId(e.target.value.toLowerCase())}/>
                   </Form.Group>
                 </Stack>
               </Form>
@@ -191,9 +190,19 @@ function Leaderboard() {
                 <Stack direction="horizontal">
                   <Col span="3">
                     <div>Sort by</div>
-                       <ButtonGroup aria-label="Basic example">
-                          <Button variant="primary">Level</Button>
-                          <Button variant="primary">Exp</Button>
+                       <ButtonGroup aria-label="exp">
+                          <Button 
+                            variant="primary"
+                            onClick={() => setOrder("level")}
+                          >
+                            Level
+                          </Button>
+                          <Button 
+                            variant="primary"
+                            onClick={() => setOrder("exp")}
+                          >
+                            Exp
+                          </Button>
                         </ButtonGroup>
                   </Col>
                   <Form.Group sm={{span: 2}} as={Col} controlId="selectRows">
@@ -250,17 +259,16 @@ function Leaderboard() {
                 <thead>
                   <tr>
                     <th>
+                      Rank
+                    </th>
+                    <th>
                       Username
                     </th>
-                    <th>
-                      Level
-                    </th>
-                    <th>
-                      Exp
-                    </th>
+                    <th key={order}> {order.charAt(0).toUpperCase() + order.slice(1)} </th>
                   </tr>
                    {leaderboard.map((user, index) => (
                   <tr>
+                    <th key={index}> {index + 1} </th>
                     <th key={index}> {user.username} </th>
                     <th key={index}> {user[order]} </th>
                   </tr>
