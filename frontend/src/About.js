@@ -13,7 +13,7 @@ import ButtonGroup from "react-bootstrap/ButtonGroup";
 import Image from 'react-bootstrap/Image';
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function Leaderboard() {
+function About() {
   const [tableName, setTableName] = useState("total");
   const [order, setOrder] = useState("level");
   const [serverId, setServerId] = useState("");
@@ -89,16 +89,16 @@ function Leaderboard() {
           width: 6px !important;
           color: #18141a;
         }
-        
+
         ::-webkit-scrollbar-track {
           background: #18141a; 
         }
-         
+
         ::-webkit-scrollbar-thumb {
           background: #242129; 
           border-radius: 5px;
         }
-        
+
         ::-webkit-scrollbar-thumb:hover {
           background: #b42a4c; 
         }
@@ -298,4 +298,4 @@ function Leaderboard() {
   );
 }
 
-export default Leaderboard;
+export default About;

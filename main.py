@@ -75,7 +75,7 @@ async def on_guild_join(guild: discord.Guild):
 async def leave_personal_servers(client: discord.Client):
   for guild in client.guilds:
     member_count = guild.member_count
-    if member_count is not None and member_count < 3:
+    if member_count is not None and member_count <= 3:
       config_channel = discord.utils.find(
           lambda c: c.name == 'infiniportal-config', guild.channels)
       connect_channel = discord.utils.find(

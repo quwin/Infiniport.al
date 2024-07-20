@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import Leaderboard from "./Leaderboard";
+import App from "./App";
 import HeaderBar from "./HeaderBar";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -10,7 +10,7 @@ root.render(
   <React.StrictMode>
     <HeaderBar />
     <br></br>
-    <Leaderboard />
+    <App />
   </React.StrictMode>,
 );
 

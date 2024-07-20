@@ -1,7 +1,8 @@
 from quart import Quart, request, redirect, url_for, render_template_string, jsonify, send_from_directory
-from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY, SKILLS
+from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY, SKILLS, SEARCH_PROFILE_LINK
 from database import add_collab_tokens, add_collab_wallets
 from profile_utils import profile_finder
+import urllib.parse
 import aiohttp
 import asyncio
 import aiosqlite
@@ -51,7 +52,7 @@ async def get_leaderboard(table_name, order, page_number, guild_name=None):
             if id:
                 cursor = await db.execute(
                     f'''
-                    SELECT u.username, u.{order}
+                    SELECT u.username, u.level, u.exp
                     FROM {table_name} u
                     JOIN guild_{id[0]} gm ON gm.user_id = u.user_id
                     ORDER BY u.{order} DESC
@@ -59,14 +60,14 @@ async def get_leaderboard(table_name, order, page_number, guild_name=None):
             else:
                 cursor = await db.execute(
                     f'''
-                    SELECT username, {order}
+                    SELECT username, level, exp
                     FROM {table_name}
                     ORDER BY {order} DESC
                     LIMIT 15 OFFSET ?''', (offset, ))
         else:
             cursor = await db.execute(
                 f'''
-                SELECT username, {order}
+                SELECT username, level, exp
                 FROM {table_name}
                 ORDER BY {order} DESC
                 LIMIT 15 OFFSET ?''', (offset, ))
@@ -77,6 +78,21 @@ async def get_leaderboard(table_name, order, page_number, guild_name=None):
         return jsonify({'error': str(e)}), 500
     finally:
         await db.close()
+
+@app.route('/search/<input>',
+       methods=['GET'])
+@app.route('/search/<input>/',
+       methods=['GET'])
+async def search_player(input):
+
+    try:
+        encoded_input = urllib.parse.quote(input)
+        async with aiohttp.ClientSession() as session, session.get(SEARCH_PROFILE_LINK + encoded_input) as search_response:
+            data = await search_response.json()
+            # Wrap data in an array if it's not already one
+            return jsonify([data] if isinstance(data, dict) else data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 async def get_access_token(auth_code):

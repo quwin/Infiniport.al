@@ -13,52 +13,92 @@ import Button from 'react-bootstrap/Button'
 import Stack from "react-bootstrap/Stack";
 import DropdownButton from 'react-bootstrap/DropdownButton';
 import Dropdown from 'react-bootstrap/Dropdown';
-import searchPlayer from './Search'
+import Spinner from 'react-bootstrap/Spinner';
+import ListGroup from 'react-bootstrap/ListGroup';
 import logo from './logo.png';
 
-
 function HeaderBar() {
+  const [isNavCollapsed, setIsNavCollapsed] = useState(true);
   const [input, setInput] = useState("");
   const [searchResult, setSearchResult] = useState([]);
-  const typingTimeout = useRef(null);
-  useEffect(() => {
-    if (typingTimeout.current) {
-      clearTimeout(typingTimeout.current);
+  const [idResult, setidResult] = useState([]);
+  const buttonRef = useRef(null);
+  const resultsRef = useRef(null);
+
+  const handleNavCollapse = async () => {
+    setIsNavCollapsed(false);
+    if (input.length > 0) {
+      try {
+        fetchSearch()
+      } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+      }
     }
-
-    typingTimeout.current = setTimeout(async () => {
-      if (input) {
-        const result = await searchPlayer(input);
-        setSearchResult(result);
-      }
-    }, 1000);
-
-    return () => {
-      if (typingTimeout.current) {
-        clearTimeout(typingTimeout.current);
-      }
-    };
-  }, [input]);
+  }
 
   const handleChange = (event) => {
     setInput(event.target.value);
+
+    if (event.target.value.length === 0) {
+      setSearchResult([]);
+      setidResult([]);
+      setIsNavCollapsed(true);
+    } 
   };
 
-  
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 996);
+  const fetchSearch = async () => {
+    let url = `/search/${input}`;
+
+    try {
+      const response = await axios.get(url);
+
+      const searchData = Array.isArray(response.data) ? response.data : [response.data];
+
+      if (Array.isArray(searchData)) {
+
+          const mappedUsernames = searchData.map(item => (item.username));
+          const mappedIDs = searchData.map(item => (item._id));
+
+          setSearchResult(mappedUsernames);
+          setidResult(mappedIDs);
+      } else {
+          console.error("Expected an array but got:", searchData);
+      }
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+    }
+  };
+
+  const handleItemClick = (player, index) => {
+    alert(`You clicked on ${player} on index ${index} with id ${idResult[index]}`);
+  };
+
+  const handleClickOutside = (event) => {
+    if (
+        (buttonRef.current && buttonRef.current.contains(event.target)) ||
+        (resultsRef.current && resultsRef.current.contains(event.target))
+      ) {
+        return;
+      } else {
+        setSearchResult([]);
+        setidResult([]);
+        setIsNavCollapsed(true);
+      }
+  };
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 996);
-    }
-
-    window.addEventListener('resize', handleResize);
-
-    // Cleanup the event listener on component unmount
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault(); // Prevent form submission
+      handleNavCollapse();
+    }
+  };
 
   return ( /*purple = 712cf9 */
 
@@ -76,7 +116,7 @@ function HeaderBar() {
       }
 
       .btn-xxl {
-        padding: .2rem 1.1rem;
+        padding: .5rem 1.2rem;
         font-size: 1rem;
       } 
       .navbar-infini {
@@ -104,96 +144,85 @@ function HeaderBar() {
                 width="30"
                 height="30"
                 className="d-inline-block align-top"
-                alt="Infiniport.al Logo"
+                alt="Logo"
               />
               {' '}Infiniport.al
             </Navbar.Brand>
-              <Nav className="me-auto">
-              <Row>
-              <Col>
-                <Nav.Link href="about">About</Nav.Link>
-              </Col>
-              <Col>
-                <NavDropdown data-bs-theme="light" title="Discord App" id="basic-nav-dropdown">
-                  <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
-                  <NavDropdown.Item href="#action/3.2">Terms of Conditions</NavDropdown.Item>
-                  <NavDropdown.Item href="#action/3.3">Privacy Policy</NavDropdown.Item>
-                  <NavDropdown.Divider />
-                  <NavDropdown.Item href="#action/3.4">Separated link</NavDropdown.Item>
-                </NavDropdown>
-                </Col>
-                </Row>
-              </Nav>
-            {isMobile ? (
-            <>
-              <Navbar.Toggle aria-controls="basic-navbar-nav" /> 
-                <Navbar.Collapse id="basic-navbar-nav">
-                  <Stack direction="horizontal">
-                    <Stack direction="vertical">
-                      <InputGroup>
-                        {input.length > 0 && (
-                          <DropdownButton
-                            title=""
-                            data-bs-theme="dark"
-                            show={true}
-                            style={{ position: "absolute", width: "100%", top: "100%", zIndex: 1000 }}
-                          >
-                            {searchResult.map((player, index) => (
-                              <Dropdown.Item key={player._id} eventKey={player.username}>
-                                {player.username}
-                              </Dropdown.Item>
-                            ))}
-                          </DropdownButton>
-                        )}
-                        <Form>
-                          <Form.Control
-                            data-bs-theme="dark"
-                            placeholder="Username/Wallet"
-                            aria-label="Search"
-                            value={input}
-                            onChange={handleChange}
-                          />
-                         </Form>
-                        </InputGroup>
-                    </Stack>
-                    <Button variant="outline-light" size="xxl" type="submit">Lookup</Button>
-                  </Stack>
-              </Navbar.Collapse>
-            </>
-          ) : (
-            <>
-              <Stack direction="horizontal">
-                <Stack direction="vertical">
-                  <InputGroup>
-                    {input.length > 0 && (
-                      <DropdownButton
-                        title=""
-                        data-bs-theme="dark"
-                        show={true}
-                        style={{ position: "absolute", width: "100%", top: "100%", zIndex: 1000 }}
-                      >
-                        {searchResult.map((player, index) => (
-                          <Dropdown.Item key={player._id} eventKey={player.username}>
-                            {player.username}
-                          </Dropdown.Item>
+            <Nav className="me-auto">
+            <Row>
+            <Col>
+              <Nav.Link href="about">About</Nav.Link>
+            </Col>
+            <Col>
+              <NavDropdown data-bs-theme="dark" title="Discord App" id="basic-nav-dropdown">
+                <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
+                <NavDropdown.Item href="#action/3.2">Terms of Conditions</NavDropdown.Item>
+                <NavDropdown.Item href="#action/3.3">Privacy Policy</NavDropdown.Item>
+                <NavDropdown.Divider />
+                <NavDropdown.Item href="#action/3.4">Separated link</NavDropdown.Item>
+              </NavDropdown>
+            </Col>
+            </Row>
+          </Nav>
+        <>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">            <Stack direction="horizontal" gap={3} style={{position: 'relative', padding: 0, width: '100%'}}>
+
+              <Container fluid>
+                <Row>
+                  <Col sm={4}/>
+                  <Col sm={5} style={{position: 'relative'}}>
+                    <ListGroup 
+                      defaultActiveKey="#1" 
+                      style={{ position: 'absolute', padding: 0,  width: '100%',  maxHeight: '100%'}}
+                       ref={resultsRef}
+                    >
+                      <Form style={{ padding: 0, width: '100%'}}>
+                        <Form.Control
+                          data-bs-theme="dark"
+                          type="search"
+                          placeholder="Enter Username/Wallet Address"
+                          className="me-2"
+                          aria-label="Search"
+                          onChange={handleChange}
+                          onKeyPress={handleKeyPress}
+                        />
+                      </Form>
+                      {!isNavCollapsed && searchResult.map((player, index) => (
+                         <ListGroup.Item 
+                          key={index}
+                          style={{width: '100%'}}
+                          action 
+                          variant="dark" 
+                          data-bs-theme="dark"
+                          onClick={() => handleItemClick(player, index)}
+                        >
+                            {player}
+                          </ListGroup.Item>
                         ))}
-                      </DropdownButton>
-                    )}
-                    <Form>
-                      <Form.Control
-                        data-bs-theme="dark"
-                        placeholder="Search by Username/Wallet"
-                        aria-label="Search"
-                        value={input}
-                        onChange={handleChange}
-                      />
-                     </Form>
-                    </InputGroup>
-                </Stack>
-                <Button variant="outline-light" size="xxl" type="submit">Lookup</Button>
-              </Stack>
-            </>
-          )}
+                    </ListGroup>
+                  </Col>
+                  <Col>
+                    <button 
+                      style={{border: 0}}
+                      class="btn-infini btn-xxl"
+                      type="button" 
+                      data-toggle="collapse" 
+                      data-target="#searchResults" 
+                      aria-controls="searchResults" 
+                      aria-expanded={!isNavCollapsed ? true : false} 
+                      aria-label="Toggle navigation" 
+                      onClick={handleNavCollapse}
+                      ref={buttonRef}
+                    >
+                      Search
+                    </button>
+                  </Col>
+                </Row>
+              </Container>
+            </Stack>
+          </Navbar.Collapse>
+        </>
         </Container>
       </Navbar>
       </>
