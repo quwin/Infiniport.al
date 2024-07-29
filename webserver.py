@@ -1,5 +1,5 @@
 from quart import Quart, request, redirect, url_for, render_template_string, jsonify, send_from_directory
-from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY, SKILLS, SEARCH_PROFILE_LINK
+from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY, SKILLS, SEARCH_PROFILE_LINK, SERVERIP
 from database import add_collab_tokens, add_collab_wallets
 from profile_utils import profile_finder
 import urllib.parse
@@ -235,4 +235,4 @@ async def serve_static(path):
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    app.run(host=SERVERIP, port=5000, debug=True, use_reloader=False)
