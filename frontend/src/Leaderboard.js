@@ -6,18 +6,36 @@ import Stack from "react-bootstrap/Stack";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
-import Badge from "react-bootstrap/Badge";
 import Form from "react-bootstrap/Form";
 import FloatingLabel from "react-bootstrap/FloatingLabel";
 import ButtonGroup from "react-bootstrap/ButtonGroup";
 import Image from 'react-bootstrap/Image';
+import Pagination from 'react-bootstrap/Pagination';
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function Leaderboard() {
   const [tableName, setTableName] = useState("total");
   const [order, setOrder] = useState("level");
   const [serverId, setServerId] = useState("");
+  const [pageNumber, setPageNumber] = useState('1');
+  const [quantity, setQuantity] = useState('15');
   const [leaderboard, setLeaderboard] = useState([]);
+  let active = 1;
+  let items = [];
+  for (let number = 1; number <= 10; number++) {
+    items.push(
+      <Pagination.Item 
+        key={number} 
+        active={number === active}
+        onClick={() => { setPageNumber(number.toString());
+                         active = number;
+        }}
+      >
+        {number}
+      </Pagination.Item>,
+    );
+  }
+
   const SKILLS = [
     "forestry",
     "woodwork",
@@ -33,10 +51,10 @@ function Leaderboard() {
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [tableName, order, serverId]);
+  }, [tableName, order, pageNumber, quantity, serverId]);
 
   const fetchLeaderboard = async () => {
-    let url = `/${tableName}/${order}/1`;
+    let url = `/leaderboard/${tableName}/${order}/${pageNumber}/${quantity}`;
     if (serverId) {
       url += `/${serverId}`;
     }
@@ -48,6 +66,7 @@ function Leaderboard() {
       console.error("Error fetching leaderboard:", error);
     }
   };
+
    /*#1e293b*/
   return (
     <>
@@ -106,7 +125,7 @@ function Leaderboard() {
         .table-lb td,     
         .table-lb th,
         .table-lb tr {
-            color: #94a3b8;
+            color: #cbd5e1;
             border: 1px dashed ;
             border-color: #829499;
             padding: 4px;
@@ -164,8 +183,6 @@ function Leaderboard() {
         }
         `}
       </style>
-      <br/>
-      <br/>
       <Container>
         <Stack gap={3} direction="horizontal">
           <span style={{ width: 75}}>
@@ -223,7 +240,13 @@ function Leaderboard() {
                   </Col>
                   <Form.Group sm={{span: 2}} as={Col} controlId="selectRows">
                     <FloatingLabel className="form-label" data-bs-theme="dark" label="Rows:" >
-                      <Form.Select aria-label="Floating label rows shown">
+                      <Form.Select 
+                        aria-label="Floating label rows shown"
+                        value={quantity}
+                        onChange={e => {
+                          setQuantity(e.target.value);
+                        }}
+                      >
                         <option value="15">15</option>
                         <option value="30">30</option>
                         <option value="50">50</option>
@@ -277,19 +300,26 @@ function Leaderboard() {
                     <th>Rank</th>
                     <th>Username</th>
                     <th>Level</th>
-                    <th>Exp</th>
+                    <th style={{textAlign: 'right'}}>Exp</th>
                   </tr>
-                   {leaderboard.map((user, index) => (
-                  <tr>
-                    <th key={index}> #{index + 1} </th>
-                    <th key={index}> {user.username} </th>
-                    <th key={index}> {user.level} </th>
-                    <th key={index}> {user.exp.toLocaleString('en-US', { maximumFractionDigits: 0 })}</th>
-                  </tr>
-                ))}
                 </thead>
+                <tbody>
+                  {leaderboard.map((user, index) => (
+                    <tr>
+                      <th key={index}> #{index+((pageNumber-1)*quantity) + 1} </th>
+                      <th key={index}> {user.username} </th>
+                      <th key={index}> {user.level} </th>
+                      <th key={index} style={{textAlign: 'right'}}> {user.exp.toLocaleString('en-US', { maximumFractionDigits: 0 })}</th>
+                    </tr>
+                  ))}
+                </tbody>
               </Table>
               </ul>
+              <Row className="justify-content-center">
+                <Col xs="auto">
+                  <Pagination data-bs-theme="dark">{items}</Pagination>
+                </Col>
+              </Row>
             </Stack>
           </Col>
         </Row>

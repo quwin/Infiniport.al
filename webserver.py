@@ -18,26 +18,31 @@ async def get_db():
     conn.row_factory = aiosqlite.Row
     return conn
 
-
-@app.route('/leaderboard/<table_name>/<order>/<page_number>/',
+@app.route('/leaderboard/<table_name>/<order>/<page_number>/<quantity>/',
            defaults={'guild_name': None},
            methods=['GET'])
-@app.route('/leaderboard/<table_name>/<order>/<page_number>',
+@app.route('/leaderboard/<table_name>/<order>/<page_number>/<quantity>',
            defaults={'guild_name': None},
            methods=['GET'])
-@app.route('/leaderboard/<table_name>/<order>/<page_number>/<guild_name>',
+@app.route('/leaderboard/<table_name>/<order>/<page_number>/<quantity>/<guild_name>',
            methods=['GET'])
-@app.route('/leaderboard/<table_name>/<order>/<page_number>/<guild_name>/',
+@app.route('/leaderboard/<table_name>/<order>/<page_number>/<quantity>/<guild_name>/',
            methods=['GET'])
-async def get_leaderboard(table_name, order, page_number, guild_name=None):
+async def get_leaderboard(table_name, order, page_number, quantity, guild_name=None):
     valid_orders = ['level', 'exp']
     valid_tables = SKILLS.copy()
     valid_tables.append('total')
 
+    try:
+        int(quantity)
+        int(page_number)
+    except ValueError:
+        return jsonify({'error': 'Invalid quantity or page number'}), 400
+
     if order not in valid_orders or table_name not in valid_tables:
         return jsonify({'error': 'Invalid table name or order'}), 400
 
-    offset = 15 * (int(page_number) - 1)
+    offset = int(quantity) * (int(page_number) - 1)
 
     try:
         db = await get_db()
@@ -56,21 +61,21 @@ async def get_leaderboard(table_name, order, page_number, guild_name=None):
                     FROM {table_name} u
                     JOIN guild_{id[0]} gm ON gm.user_id = u.user_id
                     ORDER BY u.{order} DESC
-                    LIMIT 15 OFFSET ?''', (offset, ))
+                    LIMIT {str(quantity)} OFFSET ?''', (offset, ))
             else:
                 cursor = await db.execute(
                     f'''
                     SELECT username, level, exp
                     FROM {table_name}
                     ORDER BY {order} DESC
-                    LIMIT 15 OFFSET ?''', (offset, ))
+                    LIMIT {str(quantity)} OFFSET ?''', (offset, ))
         else:
             cursor = await db.execute(
                 f'''
                 SELECT username, level, exp
                 FROM {table_name}
                 ORDER BY {order} DESC
-                LIMIT 15 OFFSET ?''', (offset, ))
+                LIMIT {str(quantity)} OFFSET ?''', (offset, ))
 
         rows = await cursor.fetchall()
         return jsonify([dict(row) for row in rows])
@@ -205,6 +210,12 @@ def error():
 
 # Serve static files
 @app.route('/')
+@app.route('/about')
+@app.route('/leaderboard')
+@app.route('/home')
+@app.route('/privacy')
+@app.route('/terms')
+@app.route('/discord')
 async def serve_index():
     if app.static_folder:
         return await send_from_directory(app.static_folder, 'index.html')
@@ -215,8 +226,7 @@ async def serve_index():
 @app.route('/<path:path>')
 async def serve_static(path):
     if app.static_folder:
-        if path != "" and os.path.exists(os.path.join(app.static_folder,
-                                                      path)):
+        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
             return await send_from_directory(app.static_folder, path)
         else:
             return await send_from_directory(app.static_folder, 'index.html')

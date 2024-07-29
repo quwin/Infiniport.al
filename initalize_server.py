@@ -5,7 +5,7 @@ from database import get_discord_roles
 from constants import RequirementType
 
 EMOJI = '<:winemaking:1236751228231225364>'
-BOT_NAME = "Infiniportal"
+BOT_NAME = "Infiniport.al"
 
 class firstMessageView(discord.ui.View):
     def __init__(self):
