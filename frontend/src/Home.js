@@ -52,15 +52,15 @@ function Home() {
       </style>
       <Container>
       <Stack gap={3} className="mx-auto">
-        <div style={{height: '2vh'}}/>
+        <div style={{height: '1vh'}}/>
         <Row className="justify-content-center text-center">
           <Col xs="auto">
-            <Image src={logo} style={{width: '15rem'}} />
+            <Image src={logo} style={{width: '8rem'}} />
             <br/>
             <h4> Community Leaderboard / Utilities</h4>
           </Col>
         </Row>
-        <div style={{height: '2vh'}}/>
+        <div style={{height: '1vh'}}/>
         <Row className="justify-content-center">
           <Col xs="auto">
             <PlayerCard
