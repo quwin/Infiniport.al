@@ -254,7 +254,7 @@ function Leaderboard() {
                     </FloatingLabel>
                   </Form.Group>
                 </Stack>
-                <Form.Check sm={{ span: 2, offset: 11}} data-bs-theme="dark"  type="switch" id="custom-switch" label="Endless Scrolling"/>
+                
               </Form>
               <Container className="no-padding">
                 <Table className="table-borderless" responsive>
