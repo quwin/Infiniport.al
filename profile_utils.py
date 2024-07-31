@@ -1,5 +1,5 @@
 import aiohttp
-from constants import SKILLS, PROFILE_MID_LINK, SEARCH_PROFILE_LINK, SKILLS_EMOJI, PIXELS_TIPS_LINK
+from constants import SKILLS, PROFILE_MID_LINK, SEARCH_PROFILE_LINK, SKILLS_EMOJI, WEBSITE_LINK
 from database import update_skills
 import urllib.parse
 import discord
@@ -74,8 +74,8 @@ def embed_profile(data, total_levels, total_skills):
     embed.set_thumbnail(url=image_url)
 
   # Footer text
-  embed.set_author(name="Pixels.tips Link",
-                   url=f"{PIXELS_TIPS_LINK}{data['_id']}")
+  embed.set_author(name="Infiniport.al Link",
+                   url=f"{WEBSITE_LINK}{data['_id']}")
 
   return embed
 

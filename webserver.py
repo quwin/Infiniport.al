@@ -79,6 +79,27 @@ async def get_leaderboard(table_name, order, page_number, quantity, guild_name=N
     finally:
         await db.close()
 
+@app.route('/player_rank/<user_id>', methods=['GET'])
+async def get_user_ranking(user_id):
+    try:
+        db = await get_db()
+        cursor = await db.execute(
+            '''
+            SELECT COUNT(*) + 1 as rank
+            FROM total
+            WHERE level > (SELECT level FROM total WHERE user_id = ?)
+            ''', (user_id, )
+        )
+        rank = await cursor.fetchone()
+        if rank:
+            return jsonify({'user_id': user_id, 'rank': rank['rank']})
+        else:
+            return jsonify({'error': 'User not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        await db.close()
+
 @app.route('/search/<input>',
        methods=['GET'])
 async def search_player(input):
@@ -222,7 +243,6 @@ async def serve_player_profile(player_id):
     else:
         return 'Static folder not configured'
 
-@app.route('/player_data/<player_id>')
 @app.route('/player_data/<player_id>')
 async def fetch_player_data(player_id):
     try:

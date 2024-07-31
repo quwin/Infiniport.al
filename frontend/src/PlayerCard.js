@@ -13,7 +13,6 @@ const PlayerCard = ({
   skillData,
   coins,
   pixel,
-  rep,
   lands,
   username,
   userID,
@@ -100,14 +99,10 @@ const PlayerCard = ({
                 <Row style={{ minWidth: '100%', height: '2rem', color: '#94a3b8', fontSize: '.9rem'}}>
                   <Col style={{ padding: '1rem', paddingLeft: '2rem', paddingRight: '0'}}>
                     {userID}
-                    <br/>
-                    Reputation: <span  style={{color: "#cbd5e1" }}>
-                     {rep.toLocaleString('en-US', { maximumFractionDigits: 2 })}
-                    </span>
                   </Col>
                   <Col style={{ padding: '1rem', paddingRight: '2rem', paddingleft: '0', textAlign: 'right'}}>
                     <span  style={{color: "#cbd5e1" }}>
-                      <Image style={{width: "1rem"}} src={coinImg}/> {coins.toLocaleString('en-US')}
+                      <Image style={{width: "1rem"}} src={coinImg}/> {coins.toLocaleString('en-US', { maximumFractionDigits: 0 })}
                     </span>
                     <br/>
                     <span style={{color: "#cbd5e1" }}>

@@ -23,34 +23,39 @@ function Player() {
     ['Metalworking'],
     ['Business'],
   ]);
-  const [coins, setCoins] = useState(1);
-  const [pixel, setPixel] = useState(1);
-  const [rep, setRep] = useState(420.69);
+  const [coins, setCoins] = useState(0);
+  const [pixel, setPixel] = useState(0);
   const [lands, setLands] = useState(0);
   const [username, setUsername] = useState('');
-  const [rank, setRank] = useState(1);
+  const [rank, setRank] = useState(0);
   const [profileImg, setProfileImg] = useState('');
   const [loading, setLoading] = useState(true);
 
   const fetchPlayer = async () => {
     let url = `/player_data/${player_id}`;
-
+    let rank_url = `/player_rank/${player_id}`;
+    
     try {
-      const response = await axios.get(url);
-      const data = response.data;
+      const dataResponse = await axios.get(url);
+      const rankResponse = await axios.get(rank_url);
+      const playerData = dataResponse.data;
+      const rankData = rankResponse.data;
 
       const updatedSkillData = skillData.map(skill => {
         const skillKey = skill[0].toLowerCase();
-        return data.levels[skillKey] 
-          ? [skill[0], data.levels[skillKey].level, data.levels[skillKey].totalExp] 
+        return playerData.levels[skillKey] 
+          ? [skill[0], playerData.levels[skillKey].level, playerData.levels[skillKey].totalExp] 
           : [skill[0], 0, 0]
       });
 
       setSkillData(updatedSkillData);
-      setUsername(data.username);
-      setLands(data.memberships["nftLand-pixels"] ? data.memberships["nftLand-pixels"].count : 0);
-      setProfileImg((data.currentAvatar["pieces"] && data.currentAvatar["pieces"]["image"]) ? data.currentAvatar["pieces"]["image"] : "")
+      setUsername(playerData.username);
+      setRank(rankData.rank)
+      setLands(playerData.memberships["nftLand-pixels"] ? playerData.memberships["nftLand-pixels"].count : 0);
+      setProfileImg((playerData.currentAvatar["pieces"] && playerData.currentAvatar["pieces"]["image"]) ? playerData.currentAvatar["pieces"]["image"] : "")
       setLoading(false);
+      setCoins(playerData.coinInventory[8].balance);
+      setPixel(playerData.coinInventory[1].balance);
     } catch (error) {
       console.error(`Error fetching player ${player_id}:`, error);
       setLoading(false);
@@ -86,7 +91,6 @@ function Player() {
                 skillData={skillData}
                 coins={coins}
                 pixel={pixel}
-                rep={rep}
                 lands={lands}
                 username={username}
                 userID={player_id}

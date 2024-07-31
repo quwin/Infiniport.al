@@ -67,7 +67,6 @@ function Home() {
               skillData={testData}
               coins={coins}
               pixel={pixel}
-              rep={rep}
               lands={lands}
               username={'Find your Profile'}
               userID={userID}

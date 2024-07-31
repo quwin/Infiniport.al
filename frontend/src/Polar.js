@@ -9,6 +9,7 @@ const PolarChart = ({ skillData }) => {
   useEffect(() => {
     const base = 1.06;
     // lvl breakpoints
+    const lvl90 = 85048935;
     const lvl85 = 51550086;
     const lvl80 = 31233985;
     const lvl75 = 18914480;
@@ -20,7 +21,10 @@ const PolarChart = ({ skillData }) => {
     const levelCap = Math.max(...skillData.map(item => item[1]));
     let divisor;
     let target;
-    if (levelCap > 79) {
+    if (levelCap > 84) {
+      divisor = lvl90;
+      target = '90';
+    } else if (levelCap > 79) {
       divisor = lvl85;
       target = '85';
     } else if (levelCap > 69) {
