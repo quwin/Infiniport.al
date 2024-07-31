@@ -4,7 +4,6 @@ import Stack from "react-bootstrap/Stack";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Image from 'react-bootstrap/Image';
-import RadarChart from './Radar';
 import PolarChart from './Polar';
 import Carousel from 'react-bootstrap/Carousel';
 import Card from 'react-bootstrap/Card';
@@ -76,13 +75,17 @@ const PlayerCard = ({
           `}
       </style>
         <Card style={{ minWidth: '25rem', maxWidth: '25rem', minHeight: '25rem', backgroundColor: '#18141a', border: "0" }}>
-        <Card.Header as="h4" style={{ color: '#cbd5e1', backgroundColor: "#1b1b1d", padding: '.8rem', height: '3.5rem'}}>
-          <Stack direction="horizontal" gap={3}>
-          <span style={{maxWidth: '14rem'}}>{username}</span>
-          <div class="div-sm" style={{ backgroundColor: "#323234"}}> Rank #{rank} </div>
-          <Image rounded style={{width: "2rem"}} src={profileImg}/>
-          </Stack>
-        </Card.Header>
+          <Card.Header  as="h4" style={{ color: '#cbd5e1', backgroundColor: "#1b1b1d", padding: '.8rem', height: '3.5rem'}}>
+            <Row>
+              <Col xs="auto" style={{width: '14rem'}}>{username}</Col>
+              <Col xs="auto">
+                <div class="div-sm" style={{backgroundColor: "#323234", maxWidth: '7rem'}}> Rank #{rank} </div>
+              </Col>
+              <Col >
+                <Image rounded style={{width: "2rem"}} src={profileImg}/>
+              </Col>
+            </Row>
+          </Card.Header>
         <Card.Body style={{ width: '100%', height: '100%', padding: 0 }}>
           <Carousel 
             interval={interval}

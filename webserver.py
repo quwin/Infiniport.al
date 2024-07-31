@@ -1,5 +1,5 @@
 from quart import Quart, request, redirect, url_for, render_template_string, jsonify, send_from_directory
-from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY, SKILLS, SEARCH_PROFILE_LINK, SERVERIP
+from constants import REDIRECT_URI, COLLAB_ID, COLLAB_SECRET, COLLAB_KEY, SKILLS, SEARCH_PROFILE_LINK, SERVERIP, PROFILE_MID_LINK
 from database import add_collab_tokens, add_collab_wallets
 from profile_utils import profile_finder
 import urllib.parse
@@ -18,15 +18,10 @@ async def get_db():
     conn.row_factory = aiosqlite.Row
     return conn
 
-@app.route('/leaderboard/<table_name>/<order>/<page_number>/<quantity>/',
-           defaults={'guild_name': None},
-           methods=['GET'])
 @app.route('/leaderboard/<table_name>/<order>/<page_number>/<quantity>',
            defaults={'guild_name': None},
            methods=['GET'])
 @app.route('/leaderboard/<table_name>/<order>/<page_number>/<quantity>/<guild_name>',
-           methods=['GET'])
-@app.route('/leaderboard/<table_name>/<order>/<page_number>/<quantity>/<guild_name>/',
            methods=['GET'])
 async def get_leaderboard(table_name, order, page_number, quantity, guild_name=None):
     valid_orders = ['level', 'exp']
@@ -57,7 +52,7 @@ async def get_leaderboard(table_name, order, page_number, quantity, guild_name=N
             if id:
                 cursor = await db.execute(
                     f'''
-                    SELECT u.username, u.level, u.exp
+                    SELECT u.username, u.user_id, u.level, u.exp
                     FROM {table_name} u
                     JOIN guild_{id[0]} gm ON gm.user_id = u.user_id
                     ORDER BY u.{order} DESC
@@ -65,14 +60,14 @@ async def get_leaderboard(table_name, order, page_number, quantity, guild_name=N
             else:
                 cursor = await db.execute(
                     f'''
-                    SELECT username, level, exp
+                    SELECT username, user_id level, exp
                     FROM {table_name}
                     ORDER BY {order} DESC
                     LIMIT {str(quantity)} OFFSET ?''', (offset, ))
         else:
             cursor = await db.execute(
                 f'''
-                SELECT username, level, exp
+                SELECT username, user_id ,level, exp
                 FROM {table_name}
                 ORDER BY {order} DESC
                 LIMIT {str(quantity)} OFFSET ?''', (offset, ))
@@ -86,10 +81,7 @@ async def get_leaderboard(table_name, order, page_number, quantity, guild_name=N
 
 @app.route('/search/<input>',
        methods=['GET'])
-@app.route('/search/<input>/',
-       methods=['GET'])
 async def search_player(input):
-
     try:
         encoded_input = urllib.parse.quote(input)
         async with aiohttp.ClientSession() as session, session.get(SEARCH_PROFILE_LINK + encoded_input) as search_response:
@@ -222,6 +214,23 @@ async def serve_index():
     else:
         return 'Static folder not configured'
 
+@app.route('/player/<player_id>')
+async def serve_player_profile(player_id):
+    print(f"Web Profile {player_id}")
+    if app.static_folder:
+        return await send_from_directory(app.static_folder, 'index.html')
+    else:
+        return 'Static folder not configured'
+
+@app.route('/player_data/<player_id>')
+@app.route('/player_data/<player_id>')
+async def fetch_player_data(player_id):
+    try:
+        async with aiohttp.ClientSession() as session, session.get(PROFILE_MID_LINK + player_id) as search_response:
+            data = await search_response.json()
+            return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/<path:path>')
 async def serve_static(path):

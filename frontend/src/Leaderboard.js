@@ -307,7 +307,9 @@ function Leaderboard() {
                   {leaderboard.map((user, index) => (
                     <tr>
                       <th key={index}> #{index+((pageNumber-1)*quantity) + 1} </th>
-                      <th key={index}> {user.username} </th>
+                      <th key={index}>
+                        <a href={`/player/${user.user_id}`}>{user.username}</a>
+                      </th>
                       <th key={index}> {user.level} </th>
                       <th key={index} style={{textAlign: 'right'}}> {user.exp.toLocaleString('en-US', { maximumFractionDigits: 0 })}</th>
                     </tr>

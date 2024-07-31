@@ -11,7 +11,7 @@ from land import speck_data, nft_land_data, landowners_update
 from modal import JobInput
 from job import JobView, delete_job_message, readd_job_view
 from collab_land import collab_channel, CollabButtons
-from guild import batch_assigned_guilds_update, all_guilds_data
+from guild import all_guilds_data
 import aiosqlite
 import aiohttp
 import time
@@ -19,8 +19,6 @@ from initalize_server import config_channel, firstMessageView
 from taskboard import taskboard_embed
 
 intents = discord.Intents.default()
-intents.messages = True
-intents.members = True
 client = discord.Client(intents=intents, command_prefix='!')
 tree = app_commands.CommandTree(client)
 
