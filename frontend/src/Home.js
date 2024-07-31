@@ -103,7 +103,7 @@ function Home() {
               </Card.Body>
               <Card.Footer style={{backgroundColor: "#1b1b1d", padding: '.5rem', height: '3.5rem'}}>
                 <Row className="justify-content-center" style={{paddingLeft: '.8rem', paddingRight: '.8rem'}}>
-                  <Button href="/discord" variant="primary">Learn More</Button>
+                  <Button href="https://discord.com/oauth2/authorize?client_id=1233991850470277130&scope=bot&permissions=1342598160" variant="primary">Learn More</Button>
                 </Row>
               </Card.Footer>
             </Card>
