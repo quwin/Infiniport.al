@@ -115,7 +115,7 @@ function SearchBar() {
         <Col xs="auto" style={{position: 'relative', minWidth: '15rem', width: '17rem'}}>
           <ListGroup 
             defaultActiveKey="0" 
-            style={{ position: 'absolute', padding: 0,   width: '100%',  maxHeight: '100%'}}
+            style={{ position: 'absolute', padding: 0,   width: '100%',  maxHeight: '100%', zIndex: 2 }}
              ref={resultsRef}
           >
             <Form style={{ padding: 0, width: '100%'}}>

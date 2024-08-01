@@ -78,7 +78,7 @@ function Home() {
             <div style={{height: '2vh'}}/>
           </Col>
           <Col xs="auto">
-            <Card style={{ minWidth: '25rem', maxWidth: '25rem', minHeight: '25rem', backgroundColor: '#18141a', border: "0", zIndex: -1 }}>
+            <Card style={{ minWidth: '25rem', maxWidth: '25rem', minHeight: '25rem', backgroundColor: '#18141a', border: "0", zIndex: 1 }}>
               <Card.Header as="h4" style={{ color: '#cbd5e1', backgroundColor: "#1b1b1d", padding: '.8rem', height: '3.5rem'}}>
                 <Stack direction="horizontal" gap={3}>
                 <span style={{maxWidth: '20rem'}}>View Leaderboards</span>
@@ -96,7 +96,7 @@ function Home() {
             <div style={{height: '2vh'}}/>
           </Col>
           <Col xs="auto">
-            <Card style={{ minWidth: '25rem', maxWidth: '25rem', minHeight: '25rem', backgroundColor: '#1e1f22', border: "0", zIndex: -1 }}>
+            <Card style={{ minWidth: '25rem', maxWidth: '25rem', minHeight: '25rem', backgroundColor: '#1e1f22', border: "0", zIndex: 1 }}>
               <Card.Body style={{ width: '100%', height: '100%', padding: 0 }}>
                 <iframe src="https://discord.com/widget?id=1245569744476700733&theme=dark" width="400" height="450" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
                 </iframe>
