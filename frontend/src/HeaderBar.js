@@ -63,7 +63,7 @@ function HeaderBar() {
               </Col>
               <Col>
                 <NavDropdown data-bs-theme="dark" title="Discord" id="basic-nav-dropdown">
-                  <NavDropdown.Item href="https://discord.com/oauth2/authorize?client_id=1233991850470277130&scope=bot&permissions=1342598160">Info</NavDropdown.Item>
+                  <NavDropdown.Item href="https://discord.com/oauth2/authorize?client_id=1233991850470277130&scope=bot&permissions=1342598160">Discord Bot</NavDropdown.Item>
                   <NavDropdown.Item href="/terms">Terms of Conditions</NavDropdown.Item>
                   <NavDropdown.Item href="/privacy">Privacy Policy</NavDropdown.Item>
                 </NavDropdown>

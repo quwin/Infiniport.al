@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from "axios";
 import Form from 'react-bootstrap/Form';
-import InputGroup from 'react-bootstrap/InputGroup';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Button from 'react-bootstrap/Button'
-import Stack from "react-bootstrap/Stack";
 import ListGroup from 'react-bootstrap/ListGroup';
 
 function SearchBar() {
@@ -47,11 +44,17 @@ function SearchBar() {
 
       if (Array.isArray(searchData)) {
 
-          const mappedUsernames = searchData.map(item => (item.username));
-          const mappedIDs = searchData.map(item => (item._id));
+        const exactMatch = searchData.find(item => item.username === input);
+
+        if (exactMatch) {
+          window.location.href = `/player/${exactMatch._id}`;
+        } else {
+          const mappedUsernames = searchData.map(item => item.username);
+          const mappedIDs = searchData.map(item => item._id);
 
           setSearchResult(mappedUsernames);
           setidResult(mappedIDs);
+        }
       } else {
           console.error("Expected an array but got:", searchData);
       }

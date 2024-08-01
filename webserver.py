@@ -85,33 +85,42 @@ async def get_user_ranking(user_id):
         db = await get_db()
         cursor = await db.execute(
             '''
-            SELECT COUNT(*) + 1 as rank
-            FROM total
-            WHERE level > (SELECT level FROM total WHERE user_id = ?)
-            ''', (user_id, )
+            SELECT 
+                CASE
+                    WHEN EXISTS (SELECT 1 FROM total WHERE user_id = ?) 
+                    THEN (
+                        SELECT COUNT(*) + 1
+                        FROM total
+                        WHERE level > (SELECT level FROM total WHERE user_id = ?)
+                    )
+                    ELSE '???'
+                END as rank
+            ''', (user_id, user_id)
         )
-        rank = await cursor.fetchone()
-        if rank:
-            return jsonify({'user_id': user_id, 'rank': rank['rank']})
+        result = await cursor.fetchone()
+        if result:
+            return jsonify({'user_id': user_id, 'rank': result['rank']})
         else:
-            return jsonify({'error': 'User not found'}), 404
+            return jsonify({'error': 'Unexpected error occurred'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
         await db.close()
 
-@app.route('/search/<input>',
-       methods=['GET'])
+
+@app.route('/search/<input>', methods=['GET'])
 async def search_player(input):
     try:
         encoded_input = urllib.parse.quote(input)
         async with aiohttp.ClientSession() as session, session.get(SEARCH_PROFILE_LINK + encoded_input) as search_response:
             data = await search_response.json()
-            # Wrap data in an array if it's not already one
-            return jsonify([data] if isinstance(data, dict) else data)
+            if isinstance(data, dict):
+                data = [data]
+            # Filter out entries where the overall level is less than 10
+            filtered_data = [entry for entry in data if entry['levels']['overall']['level'] >= 10]
+            return jsonify(filtered_data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 async def get_access_token(auth_code):
     token_url = "https://api.collab.land/oauth2/token"
